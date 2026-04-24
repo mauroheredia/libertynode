@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LibertyNode</title>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    
+    <style>
+        /* --- CONFIGURACIÓN DE VARIABLES (MODO OSCURO) --- */
+        :root {
+            --bg-deep: #0b0f19;       /* Fondo ultra oscuro del lienzo */
+            --bg-panel: #111827;      /* Color de barras y paneles */
+            --bg-node: #1f2937;       /* Fondo de los bloques/nodos */
+            --border-color: #374151;  /* Divisores y bordes técnicos */
+            --text-primary: #f3f4f6;  /* Texto principal de lectura */
+            --text-secondary: #9ca3af;/* Texto de etiquetas y descripciones */
+            
+            /* Colores de Acento (Electricidad y Lógica) */
+            --accent-blue: #3b82f6;   /* Acciones y Cables principales */
+            --accent-green: #10b981;  /* Triggers (Entradas) y Éxito */
+            --accent-yellow: #f59e0b; /* Lógica y Condicionales */
+            --accent-red: #ef4444;    /* Alertas, Errores y Borrado */
+            
+            --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+            --transition: all 0.2s ease;
+        }
+
+        /* --- RESET Y ESTRUCTURA BASE --- */
+        * {
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-deep);
+            color: var(--text-primary);
+            font-family: var(--font-family);
+            overflow: hidden; /* El scroll lo manejan los paneles internos */
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- HEADER (Barra de Estado Superior) --- */
+        header {
+            height: 55px;
+            background-color: var(--bg-panel);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 25px;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-primary);
+        }
+
+        .brand-logo {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-green));
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .brand-logo::after {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: 10px;
+            width: 8px;
+            height: 16px;
+            background-color: white;
+            clip-path: polygon(100% 0, 0 55%, 65% 55%, 15% 100%, 100% 30%, 35% 30%);
+        }
+
+        .status-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--accent-green);
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            font-weight: 600;
+        }
+
+        /* --- CONTENEDOR PRINCIPAL --- */
+        #main-container {
+            flex-grow: 1;
+            display: flex;
+            width: 100%;
+            height: calc(100% - 55px);
+        }
+
+        /* --- SIDEBAR (Biblioteca de Módulos) --- */
+        #sidebar {
+            width: 300px;
+            background-color: var(--bg-panel);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            z-index: 50;
+        }
+
+        .sidebar-header {
+            padding: 25px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-header h2 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        /* Área de scroll de módulos */
+        .modules-scroll {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding-bottom: 20px;
+        }
+
+        .module-category {
+            padding: 20px 25px 5px 25px;
+        }
+        /* Botón principal en el Header */
+.main-action-btn {
+    background: var(--blue);
+    color: white;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s ease;
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+}
+
+.main-action-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+    filter: brightness(1.1);
+}
+
+/* Botones del Footer */
+.control-btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 0.8rem;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    transition: 0.2s;
+}
+
+.control-btn.primary {
+    background: var(--green);
+    color: var(--bg);
+    border: none;
+}
+
+.control-btn.secondary {
+    background: transparent;
+    color: var(--text);
+}
+
+.control-btn:hover {
+    filter: brightness(1.2);
+    transform: scale(1.02);
+}
+        .category-title {
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .module-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            background-color: var(--bg-node);
+            border: 1px solid transparent;
+            border-radius: 10px;
+            cursor: grab;
+            transition: var(--transition);
+            user-select: none;
+        }
+
+        .module-item:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-2px);
+            background-color: #263141;
+            box-shadow: var(--shadow-md);
+        }
+
+        .module-item:active {
+            cursor: grabbing;
+        }
+
+        .mod-icon {
+            font-size: 1.3rem;
+            width: 24px;
+            text-align: center;
+        }
+
+        /* Footer de Sidebar: Botón de Importar */
+        .sidebar-footer {
+            padding: 20px 25px;
+            border-top: 1px solid var(--border-color);
+            background-color: rgba(0,0,0,0.1);
+        }
+
+        #btn-import-local {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--bg-node);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: 0.2s;
+        }
+
+        #btn-import-local:hover {
+            background-color: #2d3a4d;
+            border-color: var(--text-secondary);
+        }
+
+        /* --- WORKSPACE (Lienzo / Canvas) --- */
+        #workspace {
+            flex-grow: 1;
+            position: relative;
+            background-color: var(--bg-deep);
+            overflow: hidden;
+            /* Grilla técnica de fondo */
+            background-image: 
+                radial-gradient(var(--border-color) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+
+        /* Canvas SVG para los cables */
+        #connection-canvas {
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%;
+    pointer-events: none; /* Vital para poder hacer clic en los nodos a través del SVG */
+    z-index: 1;
+}
+
+#nodes-container { 
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%; 
+    z-index: 2; 
+}
+
+        /* Contenedor de los Nodos creados */
+        #nodes-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 20;
+        }
+
+        /* --- PANELES DE ACCIÓN (Botones Inferiores) --- */
+        #controls-panel {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            gap: 15px;
+            z-index: 100;
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 28px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+        }
+
+        .btn:hover {
+            transform: translateY(-4px);
+        }
+
+        .btn-primary {
+            background-color: var(--accent-blue);
+            color: white;
+        }
+
+        .btn-success {
+            background-color: var(--bg-panel);
+            color: var(--accent-green);
+            border: 1px solid var(--accent-green);
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+    <div class="brand">
+        <div class="brand-logo"></div>
+        <span>LibertyNode</span>
+    </div>
+
+    <div class="header-actions">
+        <button id="btn-deploy" class="main-action-btn">
+            <span class="icon">🚀</span> GENERAR CÓDIGO
+        </button>
+    </div>
+
+    <div class="status-info">
+        <div class="status-badge">
+            <span style="font-size: 0.6rem;">●</span> SISTEMA LOCAL ACTIVO
+        </div>
+        <span>v2.2.1 beta</span>
+    </div>
+</header>
+
+    <div id="main-container">
+        
+        <aside id="sidebar">
+            <div class="sidebar-header">
+                <h2>Componentes</h2>
+            </div>
+
+            <div class="modules-scroll">
+                <div class="module-category">
+                    <span class="category-title">Disparadores (Triggers)</span>
+                    
+                    <div class="module-item" draggable="true" data-module="trigger_webhook">
+                        <span class="mod-icon" style="color: var(--accent-green);">📥</span>
+                        <div>Webhook API</div>
+                    </div>
+
+                    <div class="module-item" draggable="true" data-module="trigger_clock">
+                        <span class="mod-icon" style="color: var(--accent-green);">🕒</span>
+                        <div>Reloj (Cron)</div>
+                    </div>
+                </div>
+
+                <div class="module-category">
+                    <span class="category-title">Procesamiento</span>
+                    
+                    <div class="module-item" draggable="true" data-module="logic_if">
+                        <span class="mod-icon" style="color: var(--accent-yellow);">⚖️</span>
+                        <div>Condición SI/NO</div>
+                    </div>
+                </div>
+
+                <div class="module-category">
+                    <span class="category-title">Salidas (Actions)</span>
+                    
+                    <div class="module-item" draggable="true" data-module="action_telegram">
+                        <span class="mod-icon" style="color: var(--accent-blue);">✈️</span>
+                        <div>Enviar Telegram</div>
+                    </div>
+
+                    <div class="module-item" draggable="true" data-module="action_fetch">
+                        <span class="mod-icon" style="color: var(--accent-blue);">🌐</span>
+                        <div>Petición HTTP</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <button id="btn-import-local">
+                    <span style="font-size: 1.1rem;">📦</span> Importar Módulos
+                </button>
+            </div>
+        </aside>
+
+        <main id="workspace" style="overflow: hidden;">
+
+    <div id="workspace-content" style="transform-origin: 0 0; position: absolute; top: 0; left: 0; width: 5000px; height: 5000px;">
+        
+        <svg id="connection-canvas">
+            </svg>
+        <div id="nodes-container"></div>
+
+    </div> </main>
+    </div>
+
+    <!-- MODAL: Importar Módulos (URL o archivo local) -->
+    <div id="modal-import" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85);
+         z-index:1000; align-items:center; justify-content:center; backdrop-filter:blur(5px);">
+        <div style="width:90%; max-width:520px; background:var(--bg-panel); border-radius:15px;
+                    border:1px solid var(--border-color); overflow:hidden; box-shadow:0 20px 50px rgba(0,0,0,0.7);">
+            <div style="padding:18px 25px; border-bottom:1px solid var(--border-color);
+                        display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.2);">
+                <h3 style="margin:0; color:var(--accent-green); font-size:1.1rem; text-transform:uppercase; letter-spacing:1px;">
+                    📦 Importar Módulos
+                </h3>
+                <button id="close-modal-import"
+                        style="background:transparent; border:none; color:var(--text-secondary); font-size:1.8rem; cursor:pointer; line-height:1;">&times;</button>
+            </div>
+            <div style="padding:25px; background:var(--bg-deep);">
+                <label style="display:block; font-size:0.75rem; text-transform:uppercase; letter-spacing:1px;
+                               color:var(--text-secondary); margin-bottom:8px;">☁️ Cargar desde URL (GitHub Raw)</label>
+                <div style="display:flex; gap:10px; margin-bottom:20px;">
+                    <input type="text" id="import-url"
+                           placeholder="https://raw.githubusercontent.com/usuario/repo/main/modulo.js"
+                           style="flex:1; padding:10px 12px; background:var(--bg-panel); border:1px solid var(--border-color);
+                                  border-radius:8px; color:var(--text-primary); font-family:monospace; font-size:0.8rem;
+                                  outline:none; box-sizing:border-box;"
+                           onfocus="this.style.borderColor='var(--accent-green)'"
+                           onblur="this.style.borderColor='var(--border-color)'">
+                    <button id="btn-fetch-url" class="btn btn-success" style="padding:10px 18px; white-space:nowrap;">
+                        Cargar
+                    </button>
+                </div>
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+                    <div style="flex:1; height:1px; background:var(--border-color);"></div>
+                    <span style="font-size:0.75rem; color:var(--text-secondary);">o</span>
+                    <div style="flex:1; height:1px; background:var(--border-color);"></div>
+                </div>
+                <button id="btn-local-file" class="btn"
+                        style="width:100%; background:var(--bg-node); border:1px solid var(--border-color);
+                               color:var(--text-primary); justify-content:center; padding:12px;">
+                    📁 Subir archivo .js desde tu PC
+                </button>
+                <div id="import-result" style="display:none; margin-top:16px; padding:12px 16px;
+                     border-radius:8px; font-size:0.85rem; font-weight:600;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="code-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(5px);">
+        <div style="background: var(--bg-panel); width: 85%; max-width: 900px; border-radius: 15px; border: 1px solid var(--border-color); display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.7);">
+            
+            <div style="padding: 18px 25px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2);">
+                <h3 style="margin: 0; color: var(--accent-blue); font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px;">⚙️ Script Generado (Ready for Production)</h3>
+                <button id="close-modal" style="background: transparent; border: none; color: var(--text-secondary); font-size: 1.8rem; cursor: pointer; transition: 0.2s; line-height: 1;">&times;</button>
+            </div>
+            
+            <div style="padding: 25px; background: var(--bg-deep); overflow-y: auto; max-height: 65vh; border-bottom: 1px solid var(--border-color);">
+                <pre style="margin: 0;"><code id="generated-code-display" style="color: var(--accent-green); font-family: 'Fira Code', 'Courier New', monospace; white-space: pre-wrap; font-size: 0.95rem; line-height: 1.6;"></code></pre>
+            </div>
+            
+            <div style="padding: 18px 25px; display: flex; justify-content: flex-end; gap: 15px; background: rgba(0,0,0,0.2);">
+                <button id="btn-copy-code" class="btn" style="background: var(--bg-node); border: 1px solid var(--border-color); color: white; padding: 10px 20px;">📋 Copiar Código</button>
+                <button id="btn-download-js" class="btn btn-primary" style="padding: 10px 25px;">💾 Descargar Archivo .js</button>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Firebase Auth: verificar sesión antes de arrancar la app -->
+    <script type="module">
+        import { initializeApp }          from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey:            "AIzaSyBIDHUcKrqJ9ig69eVe1fAYBaJvQ1or54k",
+            authDomain:        "code-ai-39686.firebaseapp.com",
+            projectId:         "code-ai-39686",
+            storageBucket:     "code-ai-39686.firebasestorage.app",
+            messagingSenderId: "292598315084",
+            appId:             "1:292598315084:web:3b78a655cf2e4147d41ce9"
+        };
+
+        const app  = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                // Sin sesión activa → redirigir al login
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // ---- Sesión válida: mostrar perfil en el header ----
+            const nombre = user.displayName || user.email || "Usuario";
+            const foto   = user.photoURL;
+
+            const badge = document.querySelector('.status-badge');
+            if (badge) {
+                badge.innerHTML = `
+                    ${foto
+                        ? `<img src="${foto}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;">`
+                        : `<span style="font-size:0.6rem;">●</span>`
+                    }
+                    <span style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                        ${nombre}
+                    </span>
+                    <span id="btn-logout" title="Cerrar sesión"
+                          style="cursor:pointer;opacity:0.55;font-size:0.75rem;
+                                 padding-left:8px;border-left:1px solid rgba(255,255,255,0.15);
+                                 margin-left:4px;transition:opacity 0.2s;">
+                        Salir
+                    </span>
+                `;
+
+                document.getElementById('btn-logout').addEventListener('mouseenter', (e) => e.target.style.opacity = '1');
+                document.getElementById('btn-logout').addEventListener('mouseleave', (e) => e.target.style.opacity = '0.55');
+                document.getElementById('btn-logout').addEventListener('click', async () => {
+                    await signOut(auth);
+                    sessionStorage.removeItem('gh_token');
+                    window.location.href = 'login.html';
+                });
+            }
+
+            // ---- Exponemos datos del usuario globalmente ----
+            window.LibertyUser = {
+                uid:     user.uid,
+                nombre:  nombre,
+                email:   user.email,
+                foto:    foto,
+                ghToken: sessionStorage.getItem('gh_token') || null
+            };
+
+            // ---- Cargamos los scripts de la app en orden estricto ----
+            const cargar = (src) => new Promise((res, rej) => {
+                const s   = document.createElement('script');
+                s.src     = src;
+                s.onload  = res;
+                s.onerror = () => rej(new Error(`No se pudo cargar: ${src}`));
+                document.body.appendChild(s);
+            });
+
+            cargar('modules.js')
+                .then(() => cargar('engine.js'))
+                .then(() => cargar('ui.js'))
+                .catch(err => console.error('[LibertyNode] Error de carga:', err));
+        });
+    </script>
+
+</body>
+</html>
