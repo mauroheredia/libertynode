@@ -63,7 +63,7 @@ window.LibertyModules["mi_accion_custom"] = {
 if (typeof UI !== 'undefined' && UI.addModuleToSidebar) {
     UI.addModuleToSidebar("mi_accion_custom");
 }
-Guarda este código en un .js, súbelo a un repositorio público y pégalo en el importador de LibertyNode o subilo de manera local.
+Guarda este código en un .js, súbelo a un repositorio público y pégalo en el importador de LibertyNode raaw o subilo de manera local.
 
 🤝 Contribuir
 Si tienes ideas para nuevos "Packs Oficiales" (ej. Telegram, Firebase, APIs Médicas, Arduino), siéntete libre de hacer un Fork del proyecto y enviar un Pull Request.
@@ -71,4 +71,12 @@ Si tienes ideas para nuevos "Packs Oficiales" (ej. Telegram, Firebase, APIs Méd
 🛡️ Licencia
 Distribuido bajo la Licencia MIT. Siéntete libre de usarlo, modificarlo y romperlo. (Ver el archivo LICENSE para más detalles).
 
+modulo de google:
+https://raw.githubusercontent.com/mauroheredia/libertynodepacks/refs/heads/main/google.js
+telegram:
+https://raw.githubusercontent.com/mauroheredia/libertynodepacks/refs/heads/main/telegram.js
+ia:
+https://raw.githubusercontent.com/mauroheredia/libertynodepacks/refs/heads/main/ia.js
+
+todas las ia pueden crear nuevos modulos flexibles a tus necesidades compartamos y hagamos crecer nuestra comunidad.
 
