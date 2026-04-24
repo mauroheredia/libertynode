@@ -1,112 +1,98 @@
-# libertynode
-LibertyNode: Entorno de automatización visual y soberano. Crea flujos de trabajo basados en nodos, guarda en tu propio repositorio y exporta código JavaScript puro listo para producción. .
-# ⚡ LibertyNode
+⚡ LibertyNode
 
 **Automatización visual, local y soberana.**
 
-LibertyNode es un editor visual de nodos ("No-Code" / "Low-Code") diseñado para construir flujos de trabajo y automatizaciones. A diferencia de plataformas comerciales (como Make o Zapier), LibertyNode no ejecuta tu lógica en servidores ajenos ni te cobra por "operaciones". Genera código JavaScript puro (`.js`) que puedes ejecutar en tu propia máquina, servidor o microcontrolador.
-
-**Tu código, tu soberanía, tus reglas.**
-
-Automatización visual, local y soberana.
-
-Dejá de pagar por automatizaciones. Construílas, poseelas y ejecutalas donde quieras.
+> Dejá de pagar por automatizaciones. Construílas, poseelas y ejecutalas donde quieras.
 
 LibertyNode es un editor visual de nodos ("No-Code" / "Low-Code") para crear flujos de trabajo y automatizaciones reales.
-A diferencia de plataformas comerciales como Zapier o Make, LibertyNode no ejecuta tu lógica en servidores ajenos ni te cobra por operación.
+A diferencia de plataformas comerciales como Zapier o Make, LibertyNode **no ejecuta tu lógica en servidores ajenos ni te cobra por operación**.
 
 En su lugar:
-👉 Genera código JavaScript puro (.js)
+👉 Genera código JavaScript puro (`.js`)
 👉 Lo ejecutás donde vos quieras
 👉 Vos tenés el control total
 
-Tu código, tu soberanía, tus reglas.
+**Tu código, tu soberanía, tus reglas.**
 
-🧠 ¿Por qué existe LibertyNode?
+---
+
+## 🧠 ¿Por qué existe LibertyNode?
 
 Las herramientas actuales de automatización:
 
-cobran por cada acción
-bloquean funcionalidades detrás de planes pagos
-ejecutan tu lógica en servidores que no controlás
+* cobran por cada acción
+* bloquean funcionalidades detrás de planes pagos
+* ejecutan tu lógica en servidores que no controlás
 
 LibertyNode nace para cambiar eso.
 
-Automatización sin intermediarios. Sin límites artificiales. Sin dependencia.
+> Automatización sin intermediarios. Sin límites artificiales. Sin dependencia.
 
-🚀 Características Principales
-Lienzo Infinito
-Interfaz gráfica con zoom y paneo para construir desde flujos simples hasta sistemas complejos sin perderte.
-Soberanía de Datos (BYOR)
-Bring Your Own Repo. Guardá tus proyectos directamente en tu GitHub.
-👉 Nosotros no almacenamos tu código ni tus credenciales.
-Compilador en Tiempo Real
-Todo lo que conectás se transforma instantáneamente en JavaScript puro, optimizado y legible.
-Módulos Comunitarios (Hot Reload)
-Importá funcionalidades desde URLs raw de GitHub sin recargar la app.
-👉 Sin tiendas, sin aprobaciones, sin fricción.
-Zero Dependencies
-HTML, CSS y JS puro.
-Sin React. Sin NPM. Sin build steps.
-👉 Abrís y funciona.
-⚡ Ejemplo de uso real
+---
+
+## 🚀 Características Principales
+
+* **Lienzo Infinito**
+  Interfaz gráfica con zoom y paneo para construir desde flujos simples hasta sistemas complejos sin perderte.
+
+* **Soberanía de Datos (BYOR)**
+  *Bring Your Own Repo*. Guardá tus proyectos directamente en tu GitHub.
+  👉 Nosotros no almacenamos tu código ni tus credenciales.
+
+* **Compilador en Tiempo Real**
+  Todo lo que conectás se transforma instantáneamente en JavaScript puro, optimizado y legible.
+
+* **Módulos Comunitarios (Hot Reload)**
+  Importá funcionalidades desde URLs raw de GitHub sin recargar la app.
+  👉 Sin tiendas, sin aprobaciones, sin fricción.
+
+* **Zero Dependencies**
+  HTML, CSS y JS puro.
+  Sin React. Sin NPM. Sin build steps.
+  👉 Abrís y funciona.
+
+---
+
+## ⚡ Ejemplo de uso real
 
 Imaginá esto:
 
-Recibís un mensaje en Telegram
-Lo procesás con IA
-Guardás el resultado en Google Sheets
+1. Recibís un mensaje en Telegram
+2. Lo procesás con IA
+3. Guardás el resultado en Google Sheets
 
 En LibertyNode lo armás visualmente conectando nodos.
 Después:
 
-👉 Generás el .js
+👉 Generás el `.js`
 👉 Lo corrés en tu servidor, PC o Raspberry Pi
 
 Listo. Sin pagar por cada ejecución.
-
-💻 ¿Cómo funciona?
-Armá tu lógica
-Arrastrá triggers, actions y nodos de lógica al lienzo.
-Conectá los cables
-Definí el flujo de datos visualmente.
-Generá el código
-Click en 🚀 GENERAR CÓDIGO.
-Desplegá donde quieras
-Ejecutá el .js en Node.js, servidores, IoT o donde se te cante.
-
-## 🚀 Características Principales
-
-* **Lienzo Infinito:** Interfaz gráfica avanzada con soporte para Zoom y Paneo, diseñada para construir desde flujos simples hasta redes neuronales complejas sin perderte.
-* **Soberanía de Datos (BYOR):** *Bring Your Own Repo*. Inicia sesión con GitHub y guarda tus proyectos directamente en tu propia cuenta. Nosotros no almacenamos ni tu código ni tus credenciales.
-* **Compilador en Tiempo Real:** No hay cajas negras. Todo lo que conectas visualmente se compila instantáneamente en código Vanilla JavaScript altamente optimizado y legible.
-* **Módulos Comunitarios (Hot Reload):** Expande el sistema inyectando "Packs de Expansión" directamente desde URLs crudas de GitHub (Raw URLs) sin necesidad de recargar la página ni tocar el código fuente.
-* **Zero Dependencies:** Construido con HTML, CSS y JS puro. Sin React, sin NPM, sin dolores de cabeza. Funciona directamente en el navegador.
-
----
-
-## 🛠️ Stack Tecnológico
-
-* **Core Visual:** Vanilla JavaScript (ES6+), HTML5, CSS3.
-* **Tipografía & UI:** Diseño inspirado en entornos Cyberpunk/Tech, utilizando *Space Mono* y *Syne*.
-* **Autenticación:** Firebase Auth (Exclusivo para puenteo seguro con el token de GitHub).
 
 ---
 
 ## 💻 ¿Cómo funciona?
 
-1.  **Armá tu lógica:** Arrastra disparadores (Triggers), acciones (Actions) y nodos de lógica (Logic) al espacio de trabajo.
-2.  **Conectá los cables:** Dibuja las conexiones para definir el flujo de los datos.
-3.  **Generá el código:** Haz clic en `🚀 GENERAR CÓDIGO`.
-4.  **Despliega donde quieras:** Descarga el archivo `.js` generado. Puedes correrlo con Node.js en un servidor local, una Raspberry Pi, o incrustarlo en tus proyectos IoT (ESP32/Arduino con soporte JS).
+1. **Armá tu lógica**
+   Arrastrá triggers, actions y nodos de lógica al lienzo.
+
+2. **Conectá los cables**
+   Definí el flujo de datos visualmente.
+
+3. **Generá el código**
+   Click en `🚀 GENERAR CÓDIGO`.
+
+4. **Desplegá donde quieras**
+   Ejecutá el `.js` en Node.js, servidores, IoT o donde se te cante.
 
 ---
 
 ## 🧩 Creando Módulos Personalizados
 
-LibertyNode está diseñado para ser expandido. Cualquier desarrollador puede crear un módulo y compartirlo. Solo necesitas definir un objeto y agregarlo a `window.LibertyModules`.
+LibertyNode está diseñado para ser expandido sin límites.
 
-**Ejemplo de Módulo Básico:**
+Podés crear tus propios módulos y compartirlos con el mundo.
+
 ```javascript
 window.LibertyModules["mi_accion_custom"] = {
     id: "mi_accion_custom",
@@ -120,28 +106,90 @@ window.LibertyModules["mi_accion_custom"] = {
         { id: "mensaje", label: "Texto a mostrar", type: "text" }
     ],
     generateCode: (data) => {
-        return `    // Acción personalizada ejecutada\n    console.log("${data.mensaje}");`;
+        return `    console.log("${data.mensaje}");`;
     }
 };
 
-// Si la UI está lista, lo añadimos a la barra lateral:
 if (typeof UI !== 'undefined' && UI.addModuleToSidebar) {
     UI.addModuleToSidebar("mi_accion_custom");
 }
-Guarda este código en un .js, súbelo a un repositorio público y pégalo en el importador de LibertyNode raaw o subilo de manera local.
+```
 
-🤝 Contribuir
-Si tienes ideas para nuevos "Packs Oficiales" (ej. Telegram, Firebase, APIs Médicas, Arduino), siéntete libre de hacer un Fork del proyecto y enviar un Pull Request.
+Subís ese archivo a GitHub → pegás la URL raw → listo.
 
-🛡️ Licencia
-Distribuido bajo la Licencia MIT. Siéntete libre de usarlo, modificarlo y romperlo. (Ver el archivo LICENSE para más detalles).
+👉 Sistema de plugins sin marketplace. Sin permisos. Sin bloqueos.
 
-modulo de google:
-https://raw.githubusercontent.com/mauroheredia/libertynodepacks/refs/heads/main/google.js
-telegram:
-https://raw.githubusercontent.com/mauroheredia/libertynodepacks/refs/heads/main/telegram.js
-ia:
-https://raw.githubusercontent.com/mauroheredia/libertynodepacks/refs/heads/main/ia.js
+---
 
-todas las ia pueden crear nuevos modulos flexibles a tus necesidades compartamos y hagamos crecer nuestra comunidad.
+## 📦 Módulos disponibles
+
+* Google
+  [https://raw.githubusercontent.com/mauroheredia/libertynodepacks/refs/heads/main/google.js](https://raw.githubusercontent.com/mauroheredia/libertynodepacks/refs/heads/main/google.js)
+
+* Telegram
+  [https://raw.githubusercontent.com/mauroheredia/libertynodepacks/refs/heads/main/telegram.js](https://raw.githubusercontent.com/mauroheredia/libertynodepacks/refs/heads/main/telegram.js)
+
+* IA
+  [https://raw.githubusercontent.com/mauroheredia/libertynodepacks/refs/heads/main/ia.js](https://raw.githubusercontent.com/mauroheredia/libertynodepacks/refs/heads/main/ia.js)
+
+---
+
+## 🛠️ Stack Tecnológico
+
+* **Core Visual:** Vanilla JavaScript (ES6+), HTML5, CSS3
+* **UI/UX:** Estilo Cyberpunk/Tech (Space Mono + Syne)
+* **Auth:** Firebase Auth (solo como puente seguro con GitHub)
+
+---
+
+## 🧭 Roadmap (visión)
+
+* [ ] Ejecución directa desde el navegador (sandbox runtime)
+* [ ] Librería oficial de módulos (packs curados)
+* [ ] Integración más profunda con IoT (ESP32, Arduino)
+* [ ] Sistema de debugging visual
+* [ ] Exportación a microservicios listos para deploy
+
+---
+
+## 🤝 Contribuir
+
+LibertyNode es una plataforma abierta.
+
+Podés:
+
+* crear módulos
+* mejorar el core
+* proponer ideas
+
+Hacé un fork y mandá PR 🚀
+
+---
+
+## 🌍 Filosofía
+
+LibertyNode no es solo una herramienta.
+
+Es una idea:
+
+> El código que creás debería ser tuyo.
+> La automatización debería ser libre.
+> Y las herramientas no deberían limitarte para venderte upgrades.
+
+---
+
+## 🛡️ Licencia
+
+MIT — usalo, modificalo, rompelo y volvelo a armar.
+
+---
+
+## ⚡ Empezá ahora
+
+Cloná el repo, abrilo en el navegador y armá tu primer flujo.
+
+Después ejecutalo donde quieras.
+
+Sin cuentas. Sin límites. Sin pedir permiso.
+
 
