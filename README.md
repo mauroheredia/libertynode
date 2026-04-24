@@ -8,7 +8,72 @@ LibertyNode es un editor visual de nodos ("No-Code" / "Low-Code") diseñado para
 
 **Tu código, tu soberanía, tus reglas.**
 
----
+Automatización visual, local y soberana.
+
+Dejá de pagar por automatizaciones. Construílas, poseelas y ejecutalas donde quieras.
+
+LibertyNode es un editor visual de nodos ("No-Code" / "Low-Code") para crear flujos de trabajo y automatizaciones reales.
+A diferencia de plataformas comerciales como Zapier o Make, LibertyNode no ejecuta tu lógica en servidores ajenos ni te cobra por operación.
+
+En su lugar:
+👉 Genera código JavaScript puro (.js)
+👉 Lo ejecutás donde vos quieras
+👉 Vos tenés el control total
+
+Tu código, tu soberanía, tus reglas.
+
+🧠 ¿Por qué existe LibertyNode?
+
+Las herramientas actuales de automatización:
+
+cobran por cada acción
+bloquean funcionalidades detrás de planes pagos
+ejecutan tu lógica en servidores que no controlás
+
+LibertyNode nace para cambiar eso.
+
+Automatización sin intermediarios. Sin límites artificiales. Sin dependencia.
+
+🚀 Características Principales
+Lienzo Infinito
+Interfaz gráfica con zoom y paneo para construir desde flujos simples hasta sistemas complejos sin perderte.
+Soberanía de Datos (BYOR)
+Bring Your Own Repo. Guardá tus proyectos directamente en tu GitHub.
+👉 Nosotros no almacenamos tu código ni tus credenciales.
+Compilador en Tiempo Real
+Todo lo que conectás se transforma instantáneamente en JavaScript puro, optimizado y legible.
+Módulos Comunitarios (Hot Reload)
+Importá funcionalidades desde URLs raw de GitHub sin recargar la app.
+👉 Sin tiendas, sin aprobaciones, sin fricción.
+Zero Dependencies
+HTML, CSS y JS puro.
+Sin React. Sin NPM. Sin build steps.
+👉 Abrís y funciona.
+⚡ Ejemplo de uso real
+
+Imaginá esto:
+
+Recibís un mensaje en Telegram
+Lo procesás con IA
+Guardás el resultado en Google Sheets
+
+En LibertyNode lo armás visualmente conectando nodos.
+Después:
+
+👉 Generás el .js
+👉 Lo corrés en tu servidor, PC o Raspberry Pi
+
+Listo. Sin pagar por cada ejecución.
+
+💻 ¿Cómo funciona?
+Armá tu lógica
+Arrastrá triggers, actions y nodos de lógica al lienzo.
+Conectá los cables
+Definí el flujo de datos visualmente.
+Generá el código
+Click en 🚀 GENERAR CÓDIGO.
+Desplegá donde quieras
+Ejecutá el .js en Node.js, servidores, IoT o donde se te cante.
 
 ## 🚀 Características Principales
 
