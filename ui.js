@@ -89,7 +89,7 @@ const UI = {
         const btnOpenModal = document.getElementById('btn-import-local');
         const btnCloseModal = document.getElementById('close-modal-import');
         const modalImport = document.getElementById('modal-import');
-        
+
         if (btnOpenModal && modalImport) {
             btnOpenModal.onclick = () => { modalImport.style.display = 'flex'; };
         }
@@ -122,6 +122,11 @@ const UI = {
                         if (!savedPacks.includes(url)) {
                             savedPacks.push(url);
                             localStorage.setItem('liberty_imported_packs', JSON.stringify(savedPacks));
+                            
+                            // Sincronización en la Nube Inmediata
+                            if (!window.isGuest && window.LibertyUser && typeof window.LibertyCloudSyncPacks === 'function') {
+                                window.LibertyCloudSyncPacks(window.LibertyUser.email, savedPacks);
+                            }
                         }
 
                         const modalImport = document.getElementById('modal-import');
@@ -756,9 +761,9 @@ const UI = {
                 const sr = s.getBoundingClientRect();
                 const tr = t.getBoundingClientRect();
 
-                const x1 = (sr.right  - wsRect.left) / this.camera.zoom;
+                const x1 = (sr.right - wsRect.left) / this.camera.zoom;
                 const y1 = (sr.top + sr.height / 2 - wsRect.top) / this.camera.zoom;
-                const x2 = (tr.left   - wsRect.left) / this.camera.zoom;
+                const x2 = (tr.left - wsRect.left) / this.camera.zoom;
                 const y2 = (tr.top + tr.height / 2 - wsRect.top) / this.camera.zoom;
                 const cx = Math.abs(x2 - x1) / 2;
 
@@ -900,9 +905,9 @@ const UI = {
             Object.keys(window.LibertyState.nodes).forEach(nodeId => {
                 const el = document.getElementById(nodeId);
                 if (el) {
-                    window.LibertyState.nodes[nodeId].ui = { 
-                        x: el.offsetLeft, 
-                        y: el.offsetTop 
+                    window.LibertyState.nodes[nodeId].ui = {
+                        x: el.offsetLeft,
+                        y: el.offsetTop
                     };
                 }
             });
@@ -917,7 +922,7 @@ const UI = {
         if (btnSaveLocal) {
             btnSaveLocal.onclick = () => {
                 const { projectName, cleanState } = captureProjectNameAndCoords();
-                
+
                 const blob = new Blob([JSON.stringify(cleanState, null, 2)], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -925,7 +930,7 @@ const UI = {
                 a.download = projectName + '.json';
                 a.click();
                 URL.revokeObjectURL(url);
-                
+
                 if (typeof this.showToast === 'function') this.showToast("💾 Proyecto exportado físicamente.");
             };
         }
@@ -937,9 +942,9 @@ const UI = {
                 if (window.isGuest || !window.LibertyUser) {
                     return this.showToast("⚠️ Modo Invitado: Inicia sesión para sincronizar con la nube.");
                 }
-                
+
                 const { projectName, cleanState } = captureProjectNameAndCoords();
-                
+
                 this.showToast("☁️ Guardando en la nube...");
                 try {
                     if (typeof window.LibertyCloudSave === 'function') {

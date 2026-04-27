@@ -1,28 +1,39 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>LibertyNode</title>
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
-    
+
     <style>
         /* --- CONFIGURACIÓN DE VARIABLES (MODO OSCURO) --- */
         :root {
             --node-scale-factor: 1;
-            --bg-deep: #0b0f19;       /* Fondo ultra oscuro del lienzo */
-            --bg-panel: #111827;      /* Color de barras y paneles */
-            --bg-node: #1f2937;       /* Fondo de los bloques/nodos */
-            --border-color: #374151;  /* Divisores y bordes técnicos */
-            --text-primary: #f3f4f6;  /* Texto principal de lectura */
-            --text-secondary: #9ca3af;/* Texto de etiquetas y descripciones */
-            
+            --bg-deep: #0b0f19;
+            /* Fondo ultra oscuro del lienzo */
+            --bg-panel: #111827;
+            /* Color de barras y paneles */
+            --bg-node: #1f2937;
+            /* Fondo de los bloques/nodos */
+            --border-color: #374151;
+            /* Divisores y bordes técnicos */
+            --text-primary: #f3f4f6;
+            /* Texto principal de lectura */
+            --text-secondary: #9ca3af;
+            /* Texto de etiquetas y descripciones */
+
             /* Colores de Acento (Electricidad y Lógica) */
-            --accent-blue: #3b82f6;   /* Acciones y Cables principales */
-            --accent-green: #10b981;  /* Triggers (Entradas) y Éxito */
-            --accent-yellow: #f59e0b; /* Lógica y Condicionales */
-            --accent-red: #ef4444;    /* Alertas, Errores y Borrado */
-            
+            --accent-blue: #3b82f6;
+            /* Acciones y Cables principales */
+            --accent-green: #10b981;
+            /* Triggers (Entradas) y Éxito */
+            --accent-yellow: #f59e0b;
+            /* Lógica y Condicionales */
+            --accent-red: #ef4444;
+            /* Alertas, Errores y Borrado */
+
             --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
             --transition: all 0.2s ease;
@@ -34,7 +45,8 @@
             outline: none;
         }
 
-        body, html {
+        body,
+        html {
             margin: 0;
             padding: 0;
             width: 100%;
@@ -42,7 +54,8 @@
             background-color: var(--bg-deep);
             color: var(--text-primary);
             font-family: var(--font-family);
-            overflow: hidden; /* El scroll lo manejan los paneles internos */
+            overflow: hidden;
+            /* El scroll lo manejan los paneles internos */
             display: flex;
             flex-direction: column;
         }
@@ -57,7 +70,7 @@
             justify-content: space-between;
             padding: 0 25px;
             z-index: 100;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
         }
 
         .brand {
@@ -111,25 +124,38 @@
         }
 
         /* --- RESPONSIVIDAD (MÓVIL / DEX) --- */
-        #btn-hamburger { display: none; }
-        
+        #btn-hamburger {
+            display: none;
+        }
+
         @media (max-width: 768px) {
-            :root { --node-scale-factor: 1.15; }
+            :root {
+                --node-scale-factor: 1.15;
+            }
+
             #btn-hamburger {
                 display: flex;
-                background: none; border: none; color: white;
-                font-size: 1.5rem; cursor: pointer;
+                background: none;
+                border: none;
+                color: white;
+                font-size: 1.5rem;
+                cursor: pointer;
                 margin-right: 15px;
             }
-            .brand { font-size: 1rem; }
+
+            .brand {
+                font-size: 1rem;
+            }
+
             #sidebar {
                 position: absolute;
                 height: 100%;
                 transform: translateX(-100%);
                 transition: transform 0.3s ease;
                 z-index: 200;
-                box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+                box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
             }
+
             #sidebar.open {
                 transform: translateX(0);
             }
@@ -175,57 +201,59 @@
         .module-category {
             padding: 20px 25px 5px 25px;
         }
+
         /* Botón principal en el Header */
-.main-action-btn {
-    background: var(--blue);
-    color: white;
-    border: none;
-    padding: 8px 18px;
-    border-radius: 8px;
-    font-family: var(--mono);
-    font-weight: 700;
-    font-size: 0.85rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    transition: all 0.2s ease;
-    box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
-}
+        .main-action-btn {
+            background: var(--blue);
+            color: white;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-family: var(--mono);
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s ease;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+        }
 
-.main-action-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
-    filter: brightness(1.1);
-}
+        .main-action-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+            filter: brightness(1.1);
+        }
 
-/* Botones del Footer */
-.control-btn {
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-family: var(--mono);
-    font-weight: 700;
-    font-size: 0.8rem;
-    cursor: pointer;
-    border: 1px solid var(--border);
-    transition: 0.2s;
-}
+        /* Botones del Footer */
+        .control-btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-family: var(--mono);
+            font-weight: 700;
+            font-size: 0.8rem;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            transition: 0.2s;
+        }
 
-.control-btn.primary {
-    background: var(--green);
-    color: var(--bg);
-    border: none;
-}
+        .control-btn.primary {
+            background: var(--green);
+            color: var(--bg);
+            border: none;
+        }
 
-.control-btn.secondary {
-    background: transparent;
-    color: var(--text);
-}
+        .control-btn.secondary {
+            background: transparent;
+            color: var(--text);
+        }
 
-.control-btn:hover {
-    filter: brightness(1.2);
-    transform: scale(1.02);
-}
+        .control-btn:hover {
+            filter: brightness(1.2);
+            transform: scale(1.02);
+        }
+
         .category-title {
             text-transform: uppercase;
             font-size: 0.75rem;
@@ -271,7 +299,7 @@
         .sidebar-footer {
             padding: 20px 25px;
             border-top: 1px solid var(--border-color);
-            background-color: rgba(0,0,0,0.1);
+            background-color: rgba(0, 0, 0, 0.1);
         }
 
         #btn-import-local {
@@ -302,34 +330,36 @@
             background-color: var(--bg-deep);
             overflow: hidden;
             /* Grilla técnica de fondo */
-            background-image: 
+            background-image:
                 radial-gradient(var(--border-color) 1px, transparent 1px);
             background-size: 30px 30px;
         }
 
         /* Canvas SVG para los cables */
         #connection-canvas {
-    position: absolute; 
-    top: 0; 
-    left: 0; 
-    width: 100%; 
-    height: 100%;
-    pointer-events: none; /* Vital para poder hacer clic en los nodos a través del SVG */
-    z-index: 1;
-}
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            /* Vital para poder hacer clic en los nodos a través del SVG */
+            z-index: 1;
+        }
 
-#connection-canvas path {
-    pointer-events: auto; /* Cables sí reciben clics para poder borrarlos */
-}
+        #connection-canvas path {
+            pointer-events: auto;
+            /* Cables sí reciben clics para poder borrarlos */
+        }
 
-#nodes-container { 
-    position: absolute; 
-    top: 0; 
-    left: 0; 
-    width: 100%; 
-    height: 100%; 
-    z-index: 2; 
-}
+        #nodes-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+        }
 
         /* Contenedor de los Nodos creados */
         #nodes-container {
@@ -362,7 +392,7 @@
             font-size: 1rem;
             cursor: pointer;
             transition: var(--transition);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
         }
 
         .btn:hover {
@@ -379,9 +409,9 @@
             color: var(--accent-green);
             border: 1px solid var(--accent-green);
         }
-
     </style>
 </head>
+
 <body>
 
     <header>
@@ -391,36 +421,39 @@
             LibertyNode <span style="font-size: 0.7rem; color: var(--accent-green); margin-left: 5px;">v3.4 Omni</span>
         </div>
 
-    <div class="header-actions">
-        <button id="btn-deploy" class="main-action-btn">
-            <span class="icon">🚀</span> GENERAR CÓDIGO
-        </button>
-    </div>
-
-    <div class="status-info">
-        <div class="status-badge">
-            <span style="font-size: 0.6rem;">●</span> SISTEMA LOCAL ACTIVO
+        <div class="header-actions">
+            <button id="btn-deploy" class="main-action-btn">
+                <span class="icon">🚀</span> GENERAR CÓDIGO
+            </button>
         </div>
-        <span>v3.0 estable</span>
-    </div>
-    <button id="btn-save-local" class="btn btn-ghost" style="color: var(--text-primary); border: 1px solid var(--border-color); padding: 8px 18px; border-radius: 8px; margin-right: 10px; cursor: pointer; background: transparent;">
-        💾 Exportar
-    </button>
-    <button id="btn-save-cloud" class="main-action-btn" style="background: var(--bg-panel); border: 1px solid var(--border-color); color: var(--text-primary); margin-right: 10px;">
-        ☁️ Guardar Nube
-    </button>
-<div style="display: flex; gap: 10px; align-items: center;">
-    <button id="btn-goto-projects" class="btn btn-ghost" style="color: var(--accent-blue); border: 1px solid var(--accent-blue); padding: 5px 15px; font-size: 0.8rem;">
-        📂 Mis Proyectos
-    </button>
-    <script>
-        document.getElementById('btn-goto-projects').onclick = () => window.location.href = 'proyectos.html';
-    </script>
-    </div>
-</header>
+
+        <div class="status-info">
+            <div class="status-badge">
+                <span style="font-size: 0.6rem;">●</span> SISTEMA LOCAL ACTIVO
+            </div>
+
+        </div>
+        <button id="btn-save-local" class="btn btn-ghost"
+            style="color: var(--text-primary); border: 1px solid var(--border-color); padding: 8px 18px; border-radius: 8px; margin-right: 10px; cursor: pointer; background: transparent;">
+            💾 Exportar
+        </button>
+        <button id="btn-save-cloud" class="main-action-btn"
+            style="background: var(--bg-panel); border: 1px solid var(--border-color); color: var(--text-primary); margin-right: 10px;">
+            ☁️ Guardar Nube
+        </button>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <button id="btn-goto-projects" class="btn btn-ghost"
+                style="color: var(--accent-blue); border: 1px solid var(--accent-blue); padding: 5px 15px; font-size: 0.8rem;">
+                📂 Mis Proyectos
+            </button>
+            <script>
+                document.getElementById('btn-goto-projects').onclick = () => window.location.href = 'proyectos.html';
+            </script>
+        </div>
+    </header>
 
     <div id="main-container">
-        
+
         <aside id="sidebar">
             <div class="sidebar-header">
                 <h2>Componentes</h2>
@@ -429,7 +462,7 @@
             <div class="modules-scroll">
                 <div class="module-category">
                     <span class="category-title">Disparadores (Triggers)</span>
-                    
+
                     <div class="module-item" draggable="true" data-module="trigger_webhook">
                         <span class="mod-icon" style="color: var(--accent-green);">📥</span>
                         <div>Webhook API</div>
@@ -443,7 +476,7 @@
 
                 <div class="module-category">
                     <span class="category-title">Procesamiento</span>
-                    
+
                     <div class="module-item" draggable="true" data-module="logic_if">
                         <span class="mod-icon" style="color: var(--accent-yellow);">⚖️</span>
                         <div>Condición SI/NO</div>
@@ -452,7 +485,7 @@
 
                 <div class="module-category">
                     <span class="category-title">Salidas (Actions)</span>
-                    
+
                     <div class="module-item" draggable="true" data-module="action_telegram">
                         <span class="mod-icon" style="color: var(--accent-blue);">✈️</span>
                         <div>Enviar Telegram</div>
@@ -474,13 +507,15 @@
 
         <main id="workspace" style="overflow: hidden;">
 
-    <div id="workspace-content" style="transform-origin: 0 0; position: absolute; top: 0; left: 0; width: 5000px; height: 5000px;">
-        
-        <svg id="connection-canvas">
-            </svg>
-        <div id="nodes-container"></div>
+            <div id="workspace-content"
+                style="transform-origin: 0 0; position: absolute; top: 0; left: 0; width: 5000px; height: 5000px;">
 
-    </div> </main>
+                <svg id="connection-canvas">
+                </svg>
+                <div id="nodes-container"></div>
+
+            </div>
+        </main>
     </div>
 
     <!-- MODAL: Importar Módulos (URL o archivo local) -->
@@ -490,23 +525,24 @@
                     border:1px solid var(--border-color); overflow:hidden; box-shadow:0 20px 50px rgba(0,0,0,0.7);">
             <div style="padding:18px 25px; border-bottom:1px solid var(--border-color);
                         display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.2);">
-                <h3 style="margin:0; color:var(--accent-green); font-size:1.1rem; text-transform:uppercase; letter-spacing:1px;">
+                <h3
+                    style="margin:0; color:var(--accent-green); font-size:1.1rem; text-transform:uppercase; letter-spacing:1px;">
                     📦 Importar Módulos
                 </h3>
                 <button id="close-modal-import"
-                        style="background:transparent; border:none; color:var(--text-secondary); font-size:1.8rem; cursor:pointer; line-height:1;">&times;</button>
+                    style="background:transparent; border:none; color:var(--text-secondary); font-size:1.8rem; cursor:pointer; line-height:1;">&times;</button>
             </div>
             <div style="padding:25px; background:var(--bg-deep);">
                 <label style="display:block; font-size:0.75rem; text-transform:uppercase; letter-spacing:1px;
-                               color:var(--text-secondary); margin-bottom:8px;">☁️ Cargar desde URL (GitHub Raw)</label>
+                               color:var(--text-secondary); margin-bottom:8px;">☁️ Cargar desde URL (GitHub
+                    Raw)</label>
                 <div style="display:flex; gap:10px; margin-bottom:20px;">
                     <input type="text" id="import-url"
-                           placeholder="https://raw.githubusercontent.com/usuario/repo/main/modulo.js"
-                           style="flex:1; padding:10px 12px; background:var(--bg-panel); border:1px solid var(--border-color);
+                        placeholder="https://raw.githubusercontent.com/usuario/repo/main/modulo.js" style="flex:1; padding:10px 12px; background:var(--bg-panel); border:1px solid var(--border-color);
                                   border-radius:8px; color:var(--text-primary); font-family:monospace; font-size:0.8rem;
                                   outline:none; box-sizing:border-box;"
-                           onfocus="this.style.borderColor='var(--accent-green)'"
-                           onblur="this.style.borderColor='var(--border-color)'">
+                        onfocus="this.style.borderColor='var(--accent-green)'"
+                        onblur="this.style.borderColor='var(--border-color)'">
                     <button id="btn-fetch-url" class="btn btn-success" style="padding:10px 18px; white-space:nowrap;">
                         Cargar
                     </button>
@@ -516,8 +552,7 @@
                     <span style="font-size:0.75rem; color:var(--text-secondary);">o</span>
                     <div style="flex:1; height:1px; background:var(--border-color);"></div>
                 </div>
-                <button id="btn-local-file" class="btn"
-                        style="width:100%; background:var(--bg-node); border:1px solid var(--border-color);
+                <button id="btn-local-file" class="btn" style="width:100%; background:var(--bg-node); border:1px solid var(--border-color);
                                color:var(--text-primary); justify-content:center; padding:12px;">
                     📁 Subir archivo .js desde tu PC
                 </button>
@@ -527,42 +562,54 @@
         </div>
     </div>
 
-    <div id="code-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(5px);">
-        <div style="background: var(--bg-panel); width: 85%; max-width: 900px; border-radius: 15px; border: 1px solid var(--border-color); display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.7);">
-            
-            <div style="padding: 18px 25px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2);">
-                <h3 style="margin: 0; color: var(--accent-blue); font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px;">⚙️ Script Generado (Ready for Production)</h3>
-                <button id="close-modal" style="background: transparent; border: none; color: var(--text-secondary); font-size: 1.8rem; cursor: pointer; transition: 0.2s; line-height: 1;">&times;</button>
+    <div id="code-modal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(5px);">
+        <div
+            style="background: var(--bg-panel); width: 85%; max-width: 900px; border-radius: 15px; border: 1px solid var(--border-color); display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.7);">
+
+            <div
+                style="padding: 18px 25px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2);">
+                <h3
+                    style="margin: 0; color: var(--accent-blue); font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px;">
+                    ⚙️ Script Generado (Ready for Production)</h3>
+                <button id="close-modal"
+                    style="background: transparent; border: none; color: var(--text-secondary); font-size: 1.8rem; cursor: pointer; transition: 0.2s; line-height: 1;">&times;</button>
             </div>
-            
-            <div style="padding: 25px; background: var(--bg-deep); overflow-y: auto; max-height: 65vh; border-bottom: 1px solid var(--border-color);">
-                <pre style="margin: 0;"><code id="generated-code-display" style="color: var(--accent-green); font-family: 'Fira Code', 'Courier New', monospace; white-space: pre-wrap; font-size: 0.95rem; line-height: 1.6;"></code></pre>
+
+            <div
+                style="padding: 25px; background: var(--bg-deep); overflow-y: auto; max-height: 65vh; border-bottom: 1px solid var(--border-color);">
+                <pre
+                    style="margin: 0;"><code id="generated-code-display" style="color: var(--accent-green); font-family: 'Fira Code', 'Courier New', monospace; white-space: pre-wrap; font-size: 0.95rem; line-height: 1.6;"></code></pre>
             </div>
-            
-            <div style="padding: 18px 25px; display: flex; justify-content: flex-end; gap: 15px; background: rgba(0,0,0,0.2);">
-                <button id="btn-copy-code" class="btn" style="background: var(--bg-node); border: 1px solid var(--border-color); color: white; padding: 10px 20px;">📋 Copiar Código</button>
-                <button id="btn-download-js" class="btn btn-primary" style="padding: 10px 25px;">💾 Descargar Archivo .js</button>
+
+            <div
+                style="padding: 18px 25px; display: flex; justify-content: flex-end; gap: 15px; background: rgba(0,0,0,0.2);">
+                <button id="btn-copy-code" class="btn"
+                    style="background: var(--bg-node); border: 1px solid var(--border-color); color: white; padding: 10px 20px;">📋
+                    Copiar Código</button>
+                <button id="btn-download-js" class="btn btn-primary" style="padding: 10px 25px;">💾 Descargar Archivo
+                    .js</button>
             </div>
-            
+
         </div>
     </div>
 
     <!-- Firebase Auth: verificar sesión antes de arrancar la app -->
     <script type="module">
-        import { initializeApp }          from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
         const firebaseConfig = {
-            apiKey:            "AIzaSyBIDHUcKrqJ9ig69eVe1fAYBaJvQ1or54k",
-            authDomain:        "code-ai-39686.firebaseapp.com",
-            projectId:         "code-ai-39686",
-            storageBucket:     "code-ai-39686.firebasestorage.app",
+            apiKey: "AIzaSyBIDHUcKrqJ9ig69eVe1fAYBaJvQ1or54k",
+            authDomain: "code-ai-39686.firebaseapp.com",
+            projectId: "code-ai-39686",
+            storageBucket: "code-ai-39686.firebasestorage.app",
             messagingSenderId: "292598315084",
-            appId:             "1:292598315084:web:3b78a655cf2e4147d41ce9"
+            appId: "1:292598315084:web:3b78a655cf2e4147d41ce9"
         };
 
-        const app  = initializeApp(firebaseConfig);
+        const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
 
         // Sidebar logic para móviles
@@ -599,7 +646,7 @@
             window.isGuest = false;
             // ---- Sesión válida: mostrar perfil en el header ----
             const nombre = user.displayName || user.email || "Usuario";
-            const foto   = user.photoURL;
+            const foto = user.photoURL;
 
             const badge = document.querySelector('.status-badge');
             if (badge) {
@@ -630,10 +677,10 @@
 
             // ---- Exponemos datos del usuario globalmente ----
             window.LibertyUser = {
-                uid:     user.uid,
-                nombre:  nombre,
-                email:   user.email,
-                foto:    foto,
+                uid: user.uid,
+                nombre: nombre,
+                email: user.email,
+                foto: foto,
                 ghToken: sessionStorage.getItem('gh_token') || null
             };
 
@@ -644,10 +691,46 @@
                 await setDoc(docRef, projectData, { merge: false });
             };
 
+            // ---- Sincronización de Packs de Usuario ----
+            window.LibertyCloudSyncPacks = async (email, packsArray) => {
+                const docRef = doc(db, "users", email, "settings", "packs");
+                await setDoc(docRef, { packs: packsArray }, { merge: true });
+            };
+
+            window.LibertyCloudGetPacks = async (email) => {
+                const docRef = doc(db, "users", email, "settings", "packs");
+                const snap = await getDoc(docRef);
+                if (snap.exists()) return snap.data().packs || [];
+                return [];
+            };
+
+            // Sincronizar packs remotos con localStorage del dispositivo
+            if (window.LibertyCloudGetPacks) {
+                window.LibertyCloudGetPacks(user.email).then(cloudPacks => {
+                    if (cloudPacks.length > 0) {
+                        let localPacks = JSON.parse(localStorage.getItem('liberty_imported_packs') || '[]');
+                        let updated = false;
+                        cloudPacks.forEach(p => {
+                            if (!localPacks.includes(p)) {
+                                localPacks.push(p);
+                                updated = true;
+                            }
+                        });
+                        if (updated) {
+                            localStorage.setItem('liberty_imported_packs', JSON.stringify(localPacks));
+                            if (window.UI && typeof window.UI.loadSavedPacks === 'function') {
+                                window.UI.loadSavedPacks();
+                            }
+                        }
+                    }
+                }).catch(e => console.error("Error obteniendo packs de Firestore:", e));
+            }
+
             // ---- Cargamos los scripts de la app en orden estricto ----
             cargarScriptsCore();
         });
     </script>
 
 </body>
+
 </html>
