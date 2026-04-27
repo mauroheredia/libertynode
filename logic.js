@@ -122,7 +122,14 @@ window.LibertyState = {
      * Solo guarda nodes (con targetNodes embebido). Sin connections separadas.
      */
     exportClean: function () {
+        const packs = JSON.parse(localStorage.getItem('liberty_imported_packs') || '[]');
         return {
+            metadata: {
+                name: window.currentProjectName || "Nuevo_Proyecto",
+                version: "3.0",
+                date: new Date().toISOString()
+            },
+            importedPacks: packs,
             nodes: JSON.parse(JSON.stringify(this.nodes))
         };
     }

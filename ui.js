@@ -85,6 +85,18 @@ const UI = {
      * Configura los eventos específicos del modal de importación
      */
     setupImports: function () {
+        // --- CONTROL DEL MODAL ---
+        const btnOpenModal = document.getElementById('btn-import-local');
+        const btnCloseModal = document.getElementById('close-modal-import');
+        const modalImport = document.getElementById('modal-import');
+        
+        if (btnOpenModal && modalImport) {
+            btnOpenModal.onclick = () => { modalImport.style.display = 'flex'; };
+        }
+        if (btnCloseModal && modalImport) {
+            btnCloseModal.onclick = () => { modalImport.style.display = 'none'; };
+        }
+
         // --- OPCIÓN 1: Descargar desde URL de GitHub ---
         const btnFetchUrl = document.getElementById('btn-fetch-url');
         if (btnFetchUrl) {
@@ -278,6 +290,33 @@ const UI = {
         this.svgCanvas.innerHTML = '';
         this.nodeCounter = 0;
 
+        // AUTO-CLOUD DE MODULOS: Inyectar repositorios faltantes
+        if (workspaceData.importedPacks && Array.isArray(workspaceData.importedPacks)) {
+            let savedPacks = JSON.parse(localStorage.getItem('liberty_imported_packs') || '[]');
+            let hubieronNuevos = false;
+            for (const url of workspaceData.importedPacks) {
+                if (!savedPacks.includes(url)) {
+                    if (typeof this.showToast === 'function') this.showToast("☁️ Importando pack remoto faltante...");
+                    try {
+                        const res = await fetch(url);
+                        if (res.ok) {
+                            const script = document.createElement('script');
+                            script.textContent = await res.text();
+                            document.body.appendChild(script);
+                            savedPacks.push(url);
+                            hubieronNuevos = true;
+                        }
+                    } catch (e) {
+                        console.error("Fallo al descargar pack remoto:", url);
+                    }
+                }
+            }
+            if (hubieronNuevos) {
+                localStorage.setItem('liberty_imported_packs', JSON.stringify(savedPacks));
+                if (typeof this.renderSidebar === 'function') this.renderSidebar();
+            }
+        }
+
         // Cargar en LibertyState (fuente de la verdad)
         window.LibertyState.loadFromData(workspaceData);
 
@@ -387,6 +426,46 @@ const UI = {
                 this.camera.isPanning = false;
                 this.workspace.style.cursor = 'default';
             }
+        });
+
+        // --- TOUCH EVENTS (PAN Y PINCH TO ZOOM) ---
+        let initialPinchDistance = null;
+        let initialZoom = null;
+
+        this.workspace.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                this.camera.isPanning = true;
+                this.camera.startX = e.touches[0].clientX - this.camera.x;
+                this.camera.startY = e.touches[0].clientY - this.camera.y;
+            } else if (e.touches.length === 2) {
+                this.camera.isPanning = false;
+                const dx = e.touches[0].clientX - e.touches[1].clientX;
+                const dy = e.touches[0].clientY - e.touches[1].clientY;
+                initialPinchDistance = Math.sqrt(dx * dx + dy * dy);
+                initialZoom = this.camera.zoom;
+            }
+        }, { passive: false });
+
+        this.workspace.addEventListener('touchmove', (e) => {
+            if (this.camera.isPanning && e.touches.length === 1) {
+                this.camera.x = e.touches[0].clientX - this.camera.startX;
+                this.camera.y = e.touches[0].clientY - this.camera.startY;
+                this.updateCamera();
+                e.preventDefault();
+            } else if (e.touches.length === 2 && initialPinchDistance !== null) {
+                const dx = e.touches[0].clientX - e.touches[1].clientX;
+                const dy = e.touches[0].clientY - e.touches[1].clientY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                const scale = dist / initialPinchDistance;
+                this.camera.zoom = Math.max(this.camera.minZoom, Math.min(initialZoom * scale, this.camera.maxZoom));
+                this.updateCamera();
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        this.workspace.addEventListener('touchend', (e) => {
+            if (e.touches.length < 2) initialPinchDistance = null;
+            if (e.touches.length === 0) this.camera.isPanning = false;
         });
 
         // Bloquear menú contextual del clic derecho
@@ -607,41 +686,47 @@ const UI = {
         const header = nodeEl.querySelector('.node-header');
         if (!header) return;
 
-        header.addEventListener('mousedown', (e) => {
-            // No iniciar drag si el clic fue en el botón de borrar
-            if (e.target.classList.contains('delete-btn')) return;
-            if (this.isConnectingMode) return;
+        const initDrag = (e, clientX, clientY, isTouch = false) => {
+            if (e.target.classList.contains('delete-btn') || this.isConnectingMode) return;
+            e.preventDefault(); e.stopPropagation();
 
-            e.preventDefault();
-            e.stopPropagation();
-
-            const startX = e.clientX;
-            const startY = e.clientY;
-            const initX = nodeEl.offsetLeft;
-            const initY = nodeEl.offsetTop;
+            const startX = clientX; const startY = clientY;
+            const initX = nodeEl.offsetLeft; const initY = nodeEl.offsetTop;
 
             nodeEl.style.zIndex = '100';
             nodeEl.style.opacity = '0.92';
 
-            const onMove = (mv) => {
-                // Dividir el delta por zoom para que el nodo siga exactamente al mouse
-                const dx = (mv.clientX - startX) / this.camera.zoom;
-                const dy = (mv.clientY - startY) / this.camera.zoom;
+            const onMove = (mvX, mvY) => {
+                const dx = (mvX - startX) / this.camera.zoom;
+                const dy = (mvY - startY) / this.camera.zoom;
                 nodeEl.style.left = `${initX + dx}px`;
                 nodeEl.style.top = `${initY + dy}px`;
                 if (typeof this.syncCablesFromLogic === 'function') this.syncCablesFromLogic();
             };
 
+            const onMouseMove = (mv) => onMove(mv.clientX, mv.clientY);
+            const onTouchMove = (tv) => { onMove(tv.touches[0].clientX, tv.touches[0].clientY); tv.preventDefault(); };
+
             const onUp = () => {
                 nodeEl.style.zIndex = '50';
                 nodeEl.style.opacity = '1';
-                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('mousemove', onMouseMove);
                 document.removeEventListener('mouseup', onUp);
+                document.removeEventListener('touchmove', onTouchMove);
+                document.removeEventListener('touchend', onUp);
             };
 
-            document.addEventListener('mousemove', onMove);
-            document.addEventListener('mouseup', onUp);
-        });
+            if (isTouch) {
+                document.addEventListener('touchmove', onTouchMove, { passive: false });
+                document.addEventListener('touchend', onUp);
+            } else {
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onUp);
+            }
+        };
+
+        header.addEventListener('mousedown', (e) => initDrag(e, e.clientX, e.clientY, false));
+        header.addEventListener('touchstart', (e) => initDrag(e, e.touches[0].clientX, e.touches[0].clientY, true), { passive: false });
     },
 
     // ---------------------------------------------------------
@@ -800,63 +885,72 @@ const UI = {
             };
         }
 
-        // --- 4. GUARDAR PROYECTO UNIVERSAL (BÓVEDA / GITHUB) ---
-        // --- GUARDAR PROYECTO (CON FILTRO DE SEGURIDAD) ---
-        const btnCloudSave = document.getElementById('btn-cloud-save');
-        if (btnCloudSave) {
-            btnCloudSave.onclick = async () => {
-                if (!window.LibertyUser) return this.showToast("❌ Iniciá sesión primero.");
-                const nameInput = document.getElementById('project-name-input');
-                let projectName = nameInput ? nameInput.value.trim() : (window.currentProjectName || "Nuevo_Proyecto");
+        const captureProjectNameAndCoords = () => {
+            const nameInput = document.getElementById('project-name-input');
+            let projectName = nameInput ? nameInput.value.trim() : (window.currentProjectName || "Nuevo_Proyecto");
 
-                // 1. Normalizar filename para evitar .json.json y problemas de espacios
-                if (projectName.toLowerCase().endsWith('.json')) {
-                    projectName = projectName.slice(0, -5);
+            // Normalizar filename
+            if (projectName.toLowerCase().endsWith('.json')) {
+                projectName = projectName.slice(0, -5);
+            }
+            projectName = projectName.replace(/\\s+/g, '_');
+            window.currentProjectName = projectName;
+
+            // Sincronizar posiciones visuales actuales antes de guardar
+            Object.keys(window.LibertyState.nodes).forEach(nodeId => {
+                const el = document.getElementById(nodeId);
+                if (el) {
+                    window.LibertyState.nodes[nodeId].ui = { 
+                        x: el.offsetLeft, 
+                        y: el.offsetTop 
+                    };
                 }
-                projectName = projectName.replace(/\\s+/g, '_');
-                window.currentProjectName = projectName;
+            });
 
-                // Sincronizar posiciones visuales actuales antes de guardar
-                Object.keys(window.LibertyState.nodes).forEach(nodeId => {
-                    const el = document.getElementById(nodeId);
-                    if (el) {
-                        window.LibertyState.nodes[nodeId].ui = { 
-                            x: el.offsetLeft, 
-                            y: el.offsetTop 
-                        };
+            const cleanState = window.LibertyState.exportClean();
+            cleanState.metadata.name = projectName;
+            return { projectName, cleanState };
+        };
+
+        // --- BUTÓN LOCAL (DESCARGA FÍSICA) ---
+        const btnSaveLocal = document.getElementById('btn-save-local');
+        if (btnSaveLocal) {
+            btnSaveLocal.onclick = () => {
+                const { projectName, cleanState } = captureProjectNameAndCoords();
+                
+                const blob = new Blob([JSON.stringify(cleanState, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = projectName + '.json';
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                if (typeof this.showToast === 'function') this.showToast("💾 Proyecto exportado físicamente.");
+            };
+        }
+
+        // --- BOTÓN CLOUD (FIRESTORE DB) ---
+        const btnSaveCloud = document.getElementById('btn-save-cloud');
+        if (btnSaveCloud) {
+            btnSaveCloud.onclick = async () => {
+                if (window.isGuest || !window.LibertyUser) {
+                    return this.showToast("⚠️ Modo Invitado: Inicia sesión para sincronizar con la nube.");
+                }
+                
+                const { projectName, cleanState } = captureProjectNameAndCoords();
+                
+                this.showToast("☁️ Guardando en la nube...");
+                try {
+                    if (typeof window.LibertyCloudSave === 'function') {
+                        await window.LibertyCloudSave(window.LibertyUser.email, projectName, cleanState);
+                        this.showToast(`✅ '${projectName}' guardado en la nube.`);
+                    } else {
+                        throw new Error("API Firebase no accesible.");
                     }
-                });
-
-                // Exportar desde LibertyState (fuente de la verdad)
-                const cleanState = window.LibertyState.exportClean();
-                const workspaceData = JSON.stringify(cleanState, null, 2);
-                const filename = projectName + '.json';
-
-                // --- LÓGICA DE ENVÍO (GitHub / Local) ---
-                if (window.LibertyUser.ghToken) {
-                    this.showToast("☁️ Sincronizando con GitHub...");
-                    try {
-                        const userRes = await fetch("https://api.github.com/user", { headers: { "Authorization": `token ${window.LibertyUser.ghToken}` } });
-                        const githubUsername = (await userRes.json()).login;
-                        const url = `https://api.github.com/repos/${githubUsername}/libertynode/contents/saves/${encodeURIComponent(filename)}`;
-
-                        let sha = null;
-                        const getRes = await fetch(url, { headers: { "Authorization": `token ${window.LibertyUser.ghToken}` } });
-                        if (getRes.ok) sha = (await getRes.json()).sha;
-
-                        const putRes = await fetch(url, {
-                            method: "PUT",
-                            headers: { "Authorization": `token ${window.LibertyUser.ghToken}`, "Content-Type": "application/json" },
-                            body: JSON.stringify({ message: `💾 Save: ${filename}`, content: btoa(unescape(encodeURIComponent(workspaceData))), ...(sha && { sha }) })
-                        });
-                        if (putRes.ok) this.showToast(`✅ '${projectName}' guardado en la nube (sin llaves).`);
-                    } catch (e) { this.showToast("❌ Error en conexión GitHub."); }
-                } else {
-                    const key = `liberty_saves_${window.LibertyUser.email}`;
-                    let saves = JSON.parse(localStorage.getItem(key) || '{}');
-                    saves[projectName] = workspaceData;
-                    localStorage.setItem(key, JSON.stringify(saves));
-                    this.showToast(`✅ '${projectName}' guardado localmente.`);
+                } catch (e) {
+                    console.error("[Liberty Cloud]", e);
+                    this.showToast("❌ Error de sincronización.");
                 }
             };
         }
