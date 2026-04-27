@@ -418,7 +418,8 @@
         <div class="brand">
             <button id="btn-hamburger">☰</button>
             <div class="brand-logo"></div>
-            LibertyNode <span style="font-size: 0.7rem; color: var(--accent-green); margin-left: 5px;">v3.4 Omni</span>
+            LibertyNode <span style="font-size: 0.7rem; color: var(--accent-green); margin-left: 5px;">v3.5
+                Estable</span>
         </div>
 
         <div class="header-actions">
@@ -704,23 +705,37 @@
                 return [];
             };
 
-            // Sincronizar packs remotos con localStorage del dispositivo
-            if (window.LibertyCloudGetPacks) {
+            // Sincronización Bidireccional de packs
+            if (window.LibertyCloudGetPacks && window.LibertyCloudSyncPacks) {
                 window.LibertyCloudGetPacks(user.email).then(cloudPacks => {
-                    if (cloudPacks.length > 0) {
-                        let localPacks = JSON.parse(localStorage.getItem('liberty_imported_packs') || '[]');
-                        let updated = false;
-                        cloudPacks.forEach(p => {
-                            if (!localPacks.includes(p)) {
-                                localPacks.push(p);
-                                updated = true;
-                            }
-                        });
-                        if (updated) {
-                            localStorage.setItem('liberty_imported_packs', JSON.stringify(localPacks));
-                            if (window.UI && typeof window.UI.loadSavedPacks === 'function') {
-                                window.UI.loadSavedPacks();
-                            }
+                    let localPacks = JSON.parse(localStorage.getItem('liberty_imported_packs') || '[]');
+                    let updatedLocal = false;
+                    let updatedCloud = false;
+
+                    // 1. Empujar los locales crudos a la nube
+                    localPacks.forEach(p => {
+                        if (!cloudPacks.includes(p)) {
+                            cloudPacks.push(p);
+                            updatedCloud = true;
+                        }
+                    });
+
+                    // 2. Replicar los módulos que tiene la nube de vuelta a local
+                    cloudPacks.forEach(p => {
+                        if (!localPacks.includes(p)) {
+                            localPacks.push(p);
+                            updatedLocal = true;
+                        }
+                    });
+
+                    // 3. Escribir resultados donde corresponda
+                    if (updatedCloud) {
+                        window.LibertyCloudSyncPacks(user.email, cloudPacks);
+                    }
+                    if (updatedLocal) {
+                        localStorage.setItem('liberty_imported_packs', JSON.stringify(localPacks));
+                        if (window.UI && typeof window.UI.loadSavedPacks === 'function') {
+                            window.UI.loadSavedPacks();
                         }
                     }
                 }).catch(e => console.error("Error obteniendo packs de Firestore:", e));
