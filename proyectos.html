@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LibertyNode — Centro de Mando</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #080c14;
+            --panel: #0e1420;
+            --border: #1e2d42;
+            --green: #00ff88;
+            --blue: #3b82f6;
+            --red: #ef4444;
+            --text: #e8edf5;
+            --muted: #4a5568;
+            --mono: 'Space Mono', monospace;
+            --sans: 'Syne', sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--sans);
+            min-height: 100vh;
+            padding: 40px;
+            background-image:
+                linear-gradient(var(--border) 1px, transparent 1px),
+                linear-gradient(90deg, var(--border) 1px, transparent 1px);
+            background-size: 50px 50px;
+            background-attachment: fixed;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at 50% 50%, transparent, var(--bg));
+            pointer-events: none;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 60px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 20px;
+        }
+
+        .title-group h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: -2px;
+            line-height: 0.9;
+        }
+
+        .title-group h1 span {
+            color: var(--green);
+            display: block;
+            font-size: 1.5rem;
+            letter-spacing: 4px;
+            margin-top: 5px;
+        }
+
+        .btn-back {
+            font-family: var(--mono);
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.8rem;
+            border: 1px solid var(--border);
+            padding: 10px 20px;
+            border-radius: 5px;
+            transition: 0.3s;
+        }
+
+        .btn-back:hover {
+            color: var(--green);
+            border-color: var(--green);
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.2);
+        }
+
+        /* --- GRID DE PROYECTOS --- */
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+        }
+
+        .project-card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+            transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .project-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 2px;
+            background: var(--border);
+            transition: 0.4s;
+        }
+
+        .project-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--muted);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+        }
+
+        .project-card.local::before { background: var(--green); }
+        .project-card.cloud::before { background: var(--blue); }
+
+        .type-tag {
+            font-family: var(--mono);
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.03);
+        }
+
+        .local .type-tag { color: var(--green); border: 1px solid rgba(0, 255, 136, 0.2); }
+        .cloud .type-tag { color: var(--blue); border: 1px solid rgba(59, 130, 246, 0.2); }
+
+        .project-card h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--text);
+        }
+
+        .project-card p {
+            font-size: 0.85rem;
+            color: var(--muted);
+            font-family: var(--mono);
+            margin-bottom: 25px;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-card {
+            flex: 1;
+            padding: 12px;
+            border-radius: 6px;
+            font-family: var(--mono);
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-align: center;
+            border: none;
+            transition: 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-open {
+            background: var(--text);
+            color: var(--bg);
+        }
+
+        .btn-delete {
+            background: transparent;
+            color: var(--red);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-open:hover { transform: scale(1.02); filter: brightness(1.1); }
+        .btn-delete:hover { background: var(--red); color: white; }
+
+        .empty-state {
+            grid-column: 1 / -1;
+            padding: 100px 20px;
+            text-align: center;
+            border: 1px dashed var(--border);
+            border-radius: 12px;
+            color: var(--muted);
+            font-family: var(--mono);
+        }
+
+        /* --- LOADING --- */
+        #loader {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--mono);
+            color: var(--green);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="loader">ACCEDIENDO A LOS ARCHIVOS...</div>
+
+    <div class="container">
+        <header>
+            <div class="title-group">
+                <h1>Mis <span>Automatizaciones</span></h1>
+            </div>
+            <a href="index.html" class="btn-back">VOLVER AL TERMINAL</a>
+        </header>
+
+        <div class="projects-grid" id="projects-grid">
+            <!-- Inyección de cards -->
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+        // =============================================
+        // ⚠️ REEMPLAZÁ ESTO CON TU CONFIG DE FIREBASE
+        // =============================================
+        const firebaseConfig = {
+            apiKey:            "AIzaSyBIDHUcKrqJ9ig69eVe1fAYBaJvQ1or54k",
+            authDomain:        "code-ai-39686.firebaseapp.com",
+            projectId:         "code-ai-39686",
+            storageBucket:     "code-ai-39686.firebasestorage.app",
+            messagingSenderId: "292598315084",
+            appId:             "1:292598315084:web:3b78a655cf2e4147d41ce9"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const grid = document.getElementById('projects-grid');
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            document.getElementById('loader').style.display = 'none';
+            await loadAllProjects(user);
+        });
+
+        async function loadAllProjects(user) {
+            const ghToken = sessionStorage.getItem('gh_token');
+            const projects = [];
+
+            // 1. LOCAL (Google Users / Bóveda)
+            const key = `liberty_saves_${user.email}`;
+            const localData = JSON.parse(localStorage.getItem(key) || '{}');
+            Object.keys(localData).forEach(name => {
+                projects.push({ name, type: 'local', source: 'boveda' });
+            });
+
+            // 2. CLOUD (GitHub)
+            if (ghToken) {
+                try {
+                    const repoUrl = `https://api.github.com/repos/${user.displayName || user.email}/libertynode/contents/saves`;
+                    const res = await fetch(repoUrl, { headers: { "Authorization": `token ${ghToken}` } });
+                    if (res.ok) {
+                        const files = await res.json();
+                        files.forEach(f => {
+                            if (f.name.endsWith('.json')) {
+                                projects.push({ 
+                                    name: f.name.replace('.json', ''), 
+                                    type: 'cloud', 
+                                    source: 'github',
+                                    sha: f.sha 
+                                });
+                            }
+                        });
+                    }
+                } catch (e) { console.error("GitHub fetch error", e); }
+            }
+
+            render(projects);
+        }
+
+        function render(projects) {
+            if (projects.length === 0) {
+                grid.innerHTML = '<div class="empty-state">No se detectaron flujos guardados en la nube ni en el local.</div>';
+                return;
+            }
+
+            grid.innerHTML = '';
+            projects.forEach(p => {
+                const card = document.createElement('div');
+                card.className = `project-card ${p.type}`;
+                card.innerHTML = `
+                    <div>
+                        <span class="type-tag">${p.type === 'local' ? '🏠 Local Node' : '☁️ GitHub Repo'}</span>
+                        <h3>${p.name}</h3>
+                        <p>${p.source === 'github' ? 'Sincronizado con repositorio' : 'Guardado en bóveda del navegador'}</p>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn-card btn-open" onclick="abrir('${p.name}', '${p.source}')">CARGAR</button>
+                        <button class="btn-card btn-delete" onclick="borrar('${p.name}', '${p.source}', '${p.sha || ''}')">ELIMINAR</button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        window.abrir = (name, source) => {
+            window.location.href = `index.html?load=${name}&from=${source}`;
+        };
+
+        window.borrar = async (name, source, sha) => {
+            if (!confirm(`¿Deseas purgar el proyecto '${name}'?`)) return;
+
+            if (source === 'boveda') {
+                const key = `liberty_saves_${auth.currentUser.email}`;
+                const data = JSON.parse(localStorage.getItem(key) || '{}');
+                delete data[name];
+                localStorage.setItem(key, JSON.stringify(data));
+                location.reload();
+            } else {
+                const ghToken = sessionStorage.getItem('gh_token');
+                const user = auth.currentUser.displayName || auth.currentUser.email;
+                const url = `https://api.github.com/repos/${user}/libertynode/contents/saves/${name}.json`;
+                
+                const res = await fetch(url, {
+                    method: "DELETE",
+                    headers: { "Authorization": `token ${ghToken}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({ message: "Eliminar flujo", sha: sha })
+                });
+                if (res.ok) location.reload();
+            }
+        };
+    </script>
+</body>
+</html>

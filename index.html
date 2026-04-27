@@ -292,6 +292,10 @@
     z-index: 1;
 }
 
+#connection-canvas path {
+    pointer-events: auto; /* Cables sí reciben clics para poder borrarlos */
+}
+
 #nodes-container { 
     position: absolute; 
     top: 0; 
@@ -370,7 +374,18 @@
         <div class="status-badge">
             <span style="font-size: 0.6rem;">●</span> SISTEMA LOCAL ACTIVO
         </div>
-        <span>v2.2.1 beta</span>
+        <span>v3.0 estable</span>
+    </div>
+    <button id="btn-cloud-save" class="main-action-btn" style="background: var(--bg-panel); border: 1px solid var(--border-color); color: var(--text-primary); margin-right: 10px;">
+    ☁️ Guardar Nube
+</button>
+<div style="display: flex; gap: 10px; align-items: center;">
+    <button id="btn-goto-projects" class="btn btn-ghost" style="color: var(--accent-blue); border: 1px solid var(--accent-blue); padding: 5px 15px; font-size: 0.8rem;">
+        📂 Mis Proyectos
+    </button>
+    <script>
+        document.getElementById('btn-goto-projects').onclick = () => window.location.href = 'proyectos.html';
+    </script>
     </div>
 </header>
 
@@ -576,6 +591,7 @@
             });
 
             cargar('modules.js')
+                .then(() => cargar('logic.js'))
                 .then(() => cargar('engine.js'))
                 .then(() => cargar('ui.js'))
                 .catch(err => console.error('[LibertyNode] Error de carga:', err));

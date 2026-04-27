@@ -1,15 +1,8 @@
 /**
- * LIBERTYNODE - CORE UI (v2.1)
- * Arquitectura de Cámara Infinita con Zoom y Coordenadas Normalizadas.
- * Correcciones v2.1:
- *   - Soporte completo de select y textarea en createNodeOnCanvas
- *   - deleteNode implementado (faltaba en v2.0)
- *   - Importación de megapacks restaurada
- *   - Descarga y prueba de flujo restauradas
- *   - Modal usa ID correcto (code-modal)
- *   - startConnection no pisa onclick de nodos existentes
- *   - Cable hover/click para borrar restaurado
- *   - SVG con viewBox dinámico para que los cables no se corten
+ * LIBERTYNODE - CORE UI (v3.0)
+ * Capa puramente visual. El estado vive en logic.js (LibertyState).
+ * Los cables se trazan con getBoundingClientRect() para precisión total.
+ * Carga con doble-disparo a 300ms y 1000ms para máxima fiabilidad.
  */
 
 const UI = {
@@ -18,13 +11,13 @@ const UI = {
     // 1. REFERENCIAS AL DOM Y ESTADO
     // ---------------------------------------------------------
 
-    workspace:      document.getElementById('workspace'),
+    workspace: document.getElementById('workspace'),
     nodesContainer: document.getElementById('nodes-container'),
-    svgCanvas:      document.getElementById('connection-canvas'),
+    svgCanvas: document.getElementById('connection-canvas'),
 
-    draggedModuleId:     null,
-    nodeCounter:         0,
-    isConnectingMode:    false,
+    draggedModuleId: null,
+    nodeCounter: 0,
+    isConnectingMode: false,
     sourceConnectNodeId: null,
 
     // Estado de la Cámara
@@ -35,23 +28,296 @@ const UI = {
     },
 
     // ---------------------------------------------------------
-    // 2. ARRANQUE
+    // 2. ARRANQUE, MEMORIA Y RENDERIZADO
     // ---------------------------------------------------------
 
-    init: function() {
+    /**
+     * Limpia y vuelve a dibujar toda la barra lateral leyendo window.LibertyModules
+     */
+    renderSidebar: function () {
+        const scrollArea = document.querySelector('.modules-scroll');
+        if (!scrollArea) return;
+
+        scrollArea.innerHTML = ''; // Limpiamos el HTML viejo
+
+        if (window.LibertyModules) {
+            Object.keys(window.LibertyModules).forEach(id => {
+                // Asume que addModuleToSidebar ya tiene la lógica de categorías
+                if (typeof this.addModuleToSidebar === 'function') {
+                    this.addModuleToSidebar(id);
+                }
+            });
+        }
+    },
+
+    /**
+     * Restaura los módulos importados previamente desde el localStorage
+     */
+    loadSavedPacks: async function () {
+        const saved = JSON.parse(localStorage.getItem('liberty_imported_packs') || '[]');
+        if (saved.length === 0) return;
+
+        console.log(`[LibertyNode] 🔄 Restaurando ${saved.length} packs de expansión...`);
+        let huboCambios = false;
+
+        for (const url of saved) {
+            try {
+                const res = await fetch(url);
+                if (res.ok) {
+                    const code = await res.text();
+                    const script = document.createElement('script');
+                    script.textContent = code;
+                    document.body.appendChild(script);
+                    huboCambios = true;
+                }
+            } catch (e) {
+                console.error("❌ Fallo al restaurar pack: " + url);
+            }
+        }
+
+        // Si inyectamos código, repintamos la barra lateral
+        if (huboCambios) {
+            setTimeout(() => this.renderSidebar(), 200);
+        }
+    },
+
+    /**
+     * Configura los eventos específicos del modal de importación
+     */
+    setupImports: function () {
+        // --- OPCIÓN 1: Descargar desde URL de GitHub ---
+        const btnFetchUrl = document.getElementById('btn-fetch-url');
+        if (btnFetchUrl) {
+            btnFetchUrl.onclick = async () => {
+                const url = document.getElementById('import-url').value.trim();
+                if (!url) return this.showToast("⚠️ Por favor, ingresa una URL válida.");
+
+                try {
+                    this.showToast("☁️ Descargando módulo...");
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error("Error HTTP: " + response.status);
+
+                    const script = document.createElement('script');
+                    script.textContent = await response.text();
+                    document.body.appendChild(script);
+
+                    // Forzamos el repintado y guardamos en memoria
+                    setTimeout(() => {
+                        this.renderSidebar();
+                        this.showToast("✅ Pack instalado y sincronizado.");
+
+                        let savedPacks = JSON.parse(localStorage.getItem('liberty_imported_packs') || '[]');
+                        if (!savedPacks.includes(url)) {
+                            savedPacks.push(url);
+                            localStorage.setItem('liberty_imported_packs', JSON.stringify(savedPacks));
+                        }
+
+                        const modalImport = document.getElementById('modal-import');
+                        if (modalImport) modalImport.style.display = 'none';
+                        document.getElementById('import-url').value = '';
+                    }, 150);
+
+                } catch (err) {
+                    console.error("Error importando:", err);
+                    this.showToast("❌ Error al cargar. Verificá que sea un link RAW.");
+                }
+            };
+        }
+
+        // --- OPCIÓN 2: Cargar archivo local (.js) ---
+        const btnLocalFile = document.getElementById('btn-local-file');
+        if (btnLocalFile) {
+            btnLocalFile.onclick = () => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.js';
+                input.onchange = e => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    const reader = new FileReader();
+                    reader.onload = ev => {
+                        const script = document.createElement('script');
+                        script.textContent = ev.target.result;
+                        document.body.appendChild(script);
+
+                        setTimeout(() => {
+                            this.renderSidebar();
+                            this.showToast("✅ Archivo local sincronizado.");
+                            const modalImport = document.getElementById('modal-import');
+                            if (modalImport) modalImport.style.display = 'none';
+                        }, 150);
+                    };
+                    reader.readAsText(file);
+                };
+                input.click();
+            };
+        }
+    },
+
+    setupProjectWidget: function () {
+        const existing = document.getElementById('project-name-widget');
+        if (existing) existing.remove();
+
+        const widget = document.createElement('div');
+        widget.id = 'project-name-widget';
+        widget.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background: #0e1420; border: 1px solid #1e2d42; padding: 8px 15px; border-radius: 8px; display: flex; align-items: center; gap: 10px; z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.4); border-left: 3px solid var(--accent-blue);';
+        widget.innerHTML = `
+            <span style="font-size: 1.2rem;">📂</span>
+            <input type="text" id="project-name-input" value="${window.currentProjectName || 'Nuevo_Proyecto'}" 
+                style="background: transparent; border: none; color: #e8edf5; font-family: inherit; font-size: 0.95rem; font-weight: bold; outline: none; width: 160px; border-bottom: 1px dashed #4a5568;">
+        `;
+        document.body.appendChild(widget);
+
+        const input = document.getElementById('project-name-input');
+        input.addEventListener('change', (e) => {
+            let safeName = e.target.value.trim().replace(/\\s+/g, '_');
+            if (!safeName) safeName = "Nuevo_Proyecto";
+            e.target.value = safeName;
+            window.currentProjectName = safeName;
+        });
+    },
+
+    /**
+     * Inicializador Principal
+     */
+    init: function () {
+        // Configuraciones base
         this.setupSidebarDrag();
         this.setupWorkspaceDrop();
         this.setupCamera();
-        this.setupButtons();
 
-        // Cancelar modo conexión al hacer clic en el vacío
+        if (typeof this.setupProjectWidget === 'function') {
+            this.setupProjectWidget();
+        }
+
+        // Asumo que setupButtons maneja los demás botones (exportar, cerrar modales, etc.)
+        if (typeof this.setupButtons === 'function') this.setupButtons();
+
+        // Configuramos los botones de importación
+        if (typeof this.setupImports === 'function') this.setupImports();
+
+        // Dibujamos los módulos base que ya están en modules.js
+        this.renderSidebar();
+
+        // Disparamos la recuperación de packs externos al iniciar
+        this.loadSavedPacks();
+
+        // Cancelar modo conexión al hacer clic en el vacío del lienzo
         this.workspace.addEventListener('click', (e) => {
             if (e.target === this.workspace || e.target === this.svgCanvas) {
                 if (this.isConnectingMode) this.cancelConnectionMode();
             }
         });
 
-        console.log("[LibertyNode v2.1] Sistema listo.");
+        console.log("[LibertyNode v2.1] Sistema y Motor de Memoria listos.");
+
+        // Disparamos la carga de proyecto si venimos de proyectos.html
+        // Damos 500ms para asegurar que LibertyUser y los módulos externos se hayan cargado.
+        setTimeout(() => {
+            if (typeof this.loadWorkspace === 'function') {
+                this.loadWorkspace();
+            }
+        }, 500);
+    }, // <-- ¡Atención a esta coma!
+
+    // ---------------------------------------------------------
+    // RECONSTRUCCIÓN DE PROYECTOS
+    // ---------------------------------------------------------
+    loadWorkspace: async function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        const projectName = urlParams.get('load');
+        const source = urlParams.get('from');
+
+        if (!projectName || !source) return;
+
+        window.currentProjectName = projectName;
+        const nameInput = document.getElementById('project-name-input');
+        if (nameInput) nameInput.value = projectName;
+
+        console.log(`[LibertyNode] 🔄 Cargando proyecto: ${projectName} desde ${source}`);
+        let workspaceData = null;
+
+        // 1. OBTENER LOS DATOS (Bóveda Local o GitHub)
+        if (source === 'boveda') {
+            const email = window.LibertyUser ? window.LibertyUser.email : null;
+            if (!email) return;
+            const localSaves = JSON.parse(localStorage.getItem(`liberty_saves_${email}`) || '{}');
+            const dataStr = localSaves[projectName];
+            if (dataStr) workspaceData = JSON.parse(dataStr);
+        }
+        else if (source === 'github') {
+            const ghToken = window.LibertyUser ? window.LibertyUser.ghToken : null;
+            const ghUser = window.LibertyUser ? window.LibertyUser.nombre : null;
+            if (!ghToken || !ghUser) return;
+
+            try {
+                // Buscamos el nombre de usuario real de GitHub
+                const userRes = await fetch("https://api.github.com/user", { headers: { "Authorization": `token ${ghToken}` } });
+                const githubUsername = (await userRes.json()).login;
+
+                const url = `https://api.github.com/repos/${githubUsername}/libertynode/contents/saves/${projectName}.json`;
+                const res = await fetch(url, { headers: { "Authorization": `token ${ghToken}` } });
+                if (res.ok) {
+                    const fileData = await res.json();
+                    const decoded = decodeURIComponent(escape(atob(fileData.content)));
+                    workspaceData = JSON.parse(decoded);
+                }
+            } catch (e) {
+                console.error("Fallo al descargar de GitHub", e);
+            }
+        }
+
+        if (!workspaceData) {
+            if (typeof this.showToast === 'function') this.showToast("❌ No se pudo cargar el proyecto.");
+            return;
+        }
+
+        // 2. RECONSTRUIR EL LIENZO
+        this.nodesContainer.innerHTML = '';
+        this.svgCanvas.innerHTML = '';
+        this.nodeCounter = 0;
+
+        // Cargar en LibertyState (fuente de la verdad)
+        window.LibertyState.loadFromData(workspaceData);
+
+        // A. Dibujar los Nodos (solo visual, el estado ya está en LibertyState)
+        const stateNodes = window.LibertyState.nodes;
+        Object.keys(stateNodes).forEach(nodeId => {
+            const nodeInfo = stateNodes[nodeId];
+            const modId = nodeInfo.moduleId;
+
+            // Avanzar el contador para evitar colisiones
+            const nNum = parseInt(nodeId.split('_')[1] || 0);
+            if (nNum >= this.nodeCounter) this.nodeCounter = nNum + 1;
+
+            const x = nodeInfo.ui ? nodeInfo.ui.x : 100;
+            const y = nodeInfo.ui ? nodeInfo.ui.y : 100;
+            const el = this.createNodeOnCanvas(modId, x, y, nodeId);
+
+            // Restaurar valores de campos
+            if (nodeInfo.data && el) {
+                Object.keys(nodeInfo.data).forEach(fieldId => {
+                    const input = el.querySelector(`[data-key="${fieldId}"]`);
+                    if (input) {
+                        input.value = nodeInfo.data[fieldId];
+                        window.LibertyState.updateData(nodeId, fieldId, nodeInfo.data[fieldId]);
+                    }
+                });
+            }
+        });
+
+        window.currentProjectName = projectName;
+
+        // C. DOBLE DISPARO de cables — 300ms (primer intento) + 1000ms (safety net)
+        setTimeout(() => { this.syncCablesFromLogic(); }, 300);
+        setTimeout(() => {
+            this.syncCablesFromLogic();
+            if (typeof this.showToast === 'function') {
+                this.showToast(`✅ Proyecto '${projectName}' restaurado.`);
+            }
+        }, 1000);
+
     },
 
     // ---------------------------------------------------------
@@ -62,15 +328,15 @@ const UI = {
      * Convierte coordenadas de pantalla a coordenadas del lienzo (world space).
      * Usar en TODOS los eventos que crean o interactúan con nodos.
      */
-    getRelativeCoordinates: function(e) {
+    getRelativeCoordinates: function (e) {
         const rect = this.workspace.getBoundingClientRect();
         return {
             x: (e.clientX - rect.left - this.camera.x) / this.camera.zoom,
-            y: (e.clientY - rect.top  - this.camera.y) / this.camera.zoom
+            y: (e.clientY - rect.top - this.camera.y) / this.camera.zoom
         };
     },
 
-    updateCamera: function() {
+    updateCamera: function () {
         const content = document.getElementById('workspace-content');
         if (content) {
             content.style.transform = `translate(${this.camera.x}px, ${this.camera.y}px) scale(${this.camera.zoom})`;
@@ -81,19 +347,19 @@ const UI = {
         this.workspace.style.backgroundSize = `${30 * this.camera.zoom}px ${30 * this.camera.zoom}px`;
     },
 
-    setupCamera: function() {
+    setupCamera: function () {
 
         // ZOOM con ruedita — centrado en el puntero
         this.workspace.addEventListener('wheel', (e) => {
             e.preventDefault();
-            const delta    = e.deltaY > 0 ? 0.9 : 1.1;
-            const newZoom  = Math.max(this.camera.minZoom, Math.min(this.camera.zoom * delta, this.camera.maxZoom));
-            const rect     = this.workspace.getBoundingClientRect();
-            const mx       = e.clientX - rect.left;
-            const my       = e.clientY - rect.top;
+            const delta = e.deltaY > 0 ? 0.9 : 1.1;
+            const newZoom = Math.max(this.camera.minZoom, Math.min(this.camera.zoom * delta, this.camera.maxZoom));
+            const rect = this.workspace.getBoundingClientRect();
+            const mx = e.clientX - rect.left;
+            const my = e.clientY - rect.top;
 
-            this.camera.x    = mx - (mx - this.camera.x) * (newZoom / this.camera.zoom);
-            this.camera.y    = my - (my - this.camera.y) * (newZoom / this.camera.zoom);
+            this.camera.x = mx - (mx - this.camera.x) * (newZoom / this.camera.zoom);
+            this.camera.y = my - (my - this.camera.y) * (newZoom / this.camera.zoom);
             this.camera.zoom = newZoom;
             this.updateCamera();
         }, { passive: false });
@@ -102,8 +368,8 @@ const UI = {
         this.workspace.addEventListener('mousedown', (e) => {
             if (e.button === 1 || e.button === 2) {
                 this.camera.isPanning = true;
-                this.camera.startX   = e.clientX - this.camera.x;
-                this.camera.startY   = e.clientY - this.camera.y;
+                this.camera.startX = e.clientX - this.camera.x;
+                this.camera.startY = e.clientY - this.camera.y;
                 this.workspace.style.cursor = 'grabbing';
                 e.preventDefault();
             }
@@ -131,7 +397,7 @@ const UI = {
     // 4. DRAG & DROP DEL SIDEBAR
     // ---------------------------------------------------------
 
-    setupSidebarDrag: function() {
+    setupSidebarDrag: function () {
         document.querySelectorAll('.module-item').forEach(item => {
             item.addEventListener('dragstart', (e) => {
                 // Subimos por el DOM hasta encontrar el data-module (por si el clic fue en un hijo)
@@ -141,7 +407,7 @@ const UI = {
         });
     },
 
-    setupWorkspaceDrop: function() {
+    setupWorkspaceDrop: function () {
         this.workspace.addEventListener('dragover', e => e.preventDefault());
         this.workspace.addEventListener('drop', (e) => {
             e.preventDefault();
@@ -156,19 +422,24 @@ const UI = {
     // 5. CREACIÓN DE NODOS
     // ---------------------------------------------------------
 
-    createNodeOnCanvas: function(moduleId, x, y) {
+    createNodeOnCanvas: function (moduleId, x, y, forcedId) {
         const moduleDef = window.LibertyModules[moduleId];
         if (!moduleDef) {
             console.error(`[UI] Módulo no encontrado: ${moduleId}`);
-            return;
+            return null;
         }
 
-        const nodeId = `nodo_${++this.nodeCounter}`;
-        window.LibertyEngine.addNode(nodeId, moduleId);
+        const nodeId = forcedId || `nodo_${++this.nodeCounter}`;
+        // Registrar en LibertyState (fuente de la verdad)
+        if (!window.LibertyState.nodes[nodeId]) {
+            window.LibertyState.addNode(nodeId, moduleId);
+        }
+        // Sincronizar backward-compat con Engine
+        window.LibertyState.syncToEngine();
 
         const nodeEl = document.createElement('div');
         nodeEl.className = 'node';
-        nodeEl.id        = nodeId;
+        nodeEl.id = nodeId;
         nodeEl.style.cssText = `
             position: absolute;
             left: ${x}px;
@@ -268,8 +539,8 @@ const UI = {
         // Guardar datos al escribir (input + change para cubrir select)
         nodeEl.querySelectorAll('input, select, textarea').forEach(el => {
             el.addEventListener('focus', () => el.style.borderColor = 'var(--accent-blue)');
-            el.addEventListener('blur',  () => el.style.borderColor = 'var(--border-color)');
-            el.addEventListener('input',  () => window.LibertyEngine.updateNodeData(nodeId, el.getAttribute('data-key'), el.value));
+            el.addEventListener('blur', () => el.style.borderColor = 'var(--border-color)');
+            el.addEventListener('input', () => window.LibertyEngine.updateNodeData(nodeId, el.getAttribute('data-key'), el.value));
             el.addEventListener('change', () => window.LibertyEngine.updateNodeData(nodeId, el.getAttribute('data-key'), el.value));
         });
 
@@ -292,14 +563,10 @@ const UI = {
             if (this.sourceConnectNodeId === nodeId) return;
 
             if (moduleDef.inputs > 0) {
-                const yaExiste = window.LibertyEngine.state.connections.some(
-                    c => c.source === this.sourceConnectNodeId && c.target === nodeId
-                );
-                if (!yaExiste) {
-                    window.LibertyEngine.addConnection(this.sourceConnectNodeId, nodeId);
-                }
+                window.LibertyState.linkNodes(this.sourceConnectNodeId, nodeId);
+                window.LibertyState.syncToEngine();
                 this.cancelConnectionMode();
-                this.drawAllCables();
+                this.syncCablesFromLogic();
             } else {
                 this.showToast("⚠️ Este bloque es un Disparador, no puede recibir conexiones.");
                 setTimeout(() => this.hideToast(), 3000);
@@ -316,19 +583,27 @@ const UI = {
         this.dragNode(nodeEl);
     },
 
-    deleteNode: function(nodeId) {
-        const el = document.getElementById(nodeId);
-        if (el) el.remove();
-        window.LibertyEngine.removeNode(nodeId);
-        if (this.sourceConnectNodeId === nodeId) this.cancelConnectionMode();
-        this.drawAllCables();
+    // ---------------------------------------------------------
+    // BORRADO SEGURO DE NODOS Y CABLES
+    // ---------------------------------------------------------
+    deleteNode: function (nodeId) {
+        // 1. Borrar el bloque visual
+        const nodeEl = document.getElementById(nodeId);
+        if (nodeEl) nodeEl.remove();
+
+        // 2. Borrar del estado maestro y re-sincronizar
+        window.LibertyState.deleteNode(nodeId);
+        window.LibertyState.syncToEngine();
+        this.syncCablesFromLogic();
+
+        if (typeof this.showToast === 'function') this.showToast("🗑️ Nodo eliminado.");
     },
 
     // ---------------------------------------------------------
     // 6. ARRASTRE DE NODOS (con compensación de zoom)
     // ---------------------------------------------------------
 
-    dragNode: function(nodeEl) {
+    dragNode: function (nodeEl) {
         const header = nodeEl.querySelector('.node-header');
         if (!header) return;
 
@@ -342,10 +617,10 @@ const UI = {
 
             const startX = e.clientX;
             const startY = e.clientY;
-            const initX  = nodeEl.offsetLeft;
-            const initY  = nodeEl.offsetTop;
+            const initX = nodeEl.offsetLeft;
+            const initY = nodeEl.offsetTop;
 
-            nodeEl.style.zIndex  = '100';
+            nodeEl.style.zIndex = '100';
             nodeEl.style.opacity = '0.92';
 
             const onMove = (mv) => {
@@ -353,19 +628,19 @@ const UI = {
                 const dx = (mv.clientX - startX) / this.camera.zoom;
                 const dy = (mv.clientY - startY) / this.camera.zoom;
                 nodeEl.style.left = `${initX + dx}px`;
-                nodeEl.style.top  = `${initY + dy}px`;
-                this.drawAllCables();
+                nodeEl.style.top = `${initY + dy}px`;
+                if (typeof this.syncCablesFromLogic === 'function') this.syncCablesFromLogic();
             };
 
             const onUp = () => {
-                nodeEl.style.zIndex  = '50';
+                nodeEl.style.zIndex = '50';
                 nodeEl.style.opacity = '1';
                 document.removeEventListener('mousemove', onMove);
-                document.removeEventListener('mouseup',   onUp);
+                document.removeEventListener('mouseup', onUp);
             };
 
             document.addEventListener('mousemove', onMove);
-            document.addEventListener('mouseup',   onUp);
+            document.addEventListener('mouseup', onUp);
         });
     },
 
@@ -373,33 +648,47 @@ const UI = {
     // 7. CABLES SVG
     // ---------------------------------------------------------
 
-    drawAllCables: function() {
-        const connections = window.LibertyEngine.state.connections;
+    syncCablesFromLogic: function () {
+        const wsContent = document.getElementById('workspace-content');
+        const wsRect = wsContent ? wsContent.getBoundingClientRect() : { left: 0, top: 0 };
+
+        const nodes = window.LibertyState.nodes || {};
         let paths = '';
 
-        connections.forEach(conn => {
-            const s = document.getElementById(conn.source);
-            const t = document.getElementById(conn.target);
-            if (!s || !t) return;
+        Object.keys(nodes).forEach(sourceId => {
+            const nodeInfo = nodes[sourceId];
+            if (!nodeInfo.targetNodes || nodeInfo.targetNodes.length === 0) return;
 
-            const x1 = s.offsetLeft + s.offsetWidth;
-            const y1 = s.offsetTop  + s.offsetHeight / 2;
-            const x2 = t.offsetLeft;
-            const y2 = t.offsetTop  + t.offsetHeight / 2;
-            const cx = (x2 - x1) / 2;
+            // Auto-purga de targets huérfanos
+            nodeInfo.targetNodes = nodeInfo.targetNodes.filter(t => !!nodes[t]);
 
-            paths += `
-                <path
+            nodeInfo.targetNodes.forEach(targetId => {
+                const s = document.getElementById(sourceId);
+                const t = document.getElementById(targetId);
+                if (!s || !t) return;
+
+                // getBoundingClientRect relativo al workspace-content (preciso con zoom/transform)
+                const sr = s.getBoundingClientRect();
+                const tr = t.getBoundingClientRect();
+
+                const x1 = (sr.right  - wsRect.left) / this.camera.zoom;
+                const y1 = (sr.top + sr.height / 2 - wsRect.top) / this.camera.zoom;
+                const x2 = (tr.left   - wsRect.left) / this.camera.zoom;
+                const y2 = (tr.top + tr.height / 2 - wsRect.top) / this.camera.zoom;
+                const cx = Math.abs(x2 - x1) / 2;
+
+                paths += `<path
                     class="cable"
-                    data-source="${conn.source}"
-                    data-target="${conn.target}"
-                    d="M ${x1} ${y1} C ${x1+cx} ${y1}, ${x2-cx} ${y2}, ${x2} ${y2}"
+                    data-source="${sourceId}"
+                    data-target="${targetId}"
+                    d="M ${x1} ${y1} C ${x1 + cx} ${y1}, ${x2 - cx} ${y2}, ${x2} ${y2}"
                     stroke="var(--accent-blue)"
                     stroke-width="3"
                     fill="none"
                     stroke-linecap="round"
                     style="cursor:pointer; transition: stroke 0.15s;"
                 />`;
+            });
         });
 
         this.svgCanvas.innerHTML = `
@@ -408,10 +697,9 @@ const UI = {
                     <polygon points="0 0, 8 3, 0 6" fill="var(--accent-blue)"/>
                 </marker>
             </defs>
-            ${paths}
-        `;
+            ${paths}`;
 
-        // Hover y clic para borrar cable — se asignan post-render
+        // Eventos en cables (borrar al clic, highlight en hover)
         this.svgCanvas.querySelectorAll('.cable').forEach(path => {
             path.addEventListener('mouseenter', () => {
                 path.setAttribute('stroke', 'var(--accent-red)');
@@ -424,222 +712,212 @@ const UI = {
             path.addEventListener('click', () => {
                 const src = path.getAttribute('data-source');
                 const tgt = path.getAttribute('data-target');
-                window.LibertyEngine.state.connections = window.LibertyEngine.state.connections.filter(
-                    c => !(c.source === src && c.target === tgt)
-                );
-                this.drawAllCables();
+                window.LibertyState.unlinkNodes(src, tgt);
+                window.LibertyState.syncToEngine();
+                this.syncCablesFromLogic();
             });
         });
+
+        // Backward-compat: sincronizar Engine
+        window.LibertyState.syncToEngine();
     },
 
     // ---------------------------------------------------------
     // 8. MODO CONEXIÓN
     // ---------------------------------------------------------
 
-    startConnectionMode: function(sourceId) {
-        this.isConnectingMode    = true;
+    startConnectionMode: function (sourceId) {
+        this.isConnectingMode = true;
         this.sourceConnectNodeId = sourceId;
         document.body.style.cursor = 'crosshair';
 
         const sourceEl = document.getElementById(sourceId);
         if (sourceEl) {
             sourceEl.style.borderColor = 'var(--accent-green)';
-            sourceEl.style.boxShadow   = '0 0 20px rgba(16,185,129,0.35)';
+            sourceEl.style.boxShadow = '0 0 20px rgba(16,185,129,0.35)';
         }
 
         this.showToast("🔗 Hacé clic en el bloque destino. (Clic en el fondo para cancelar)");
     },
 
-    cancelConnectionMode: function() {
+    cancelConnectionMode: function () {
         if (this.sourceConnectNodeId) {
             const el = document.getElementById(this.sourceConnectNodeId);
             if (el) {
                 el.style.borderColor = 'var(--border-color)';
-                el.style.boxShadow   = 'var(--shadow-md)';
+                el.style.boxShadow = 'var(--shadow-md)';
             }
         }
-        this.isConnectingMode    = false;
+        this.isConnectingMode = false;
         this.sourceConnectNodeId = null;
         document.body.style.cursor = 'default';
         this.hideToast();
     },
 
     // ---------------------------------------------------------
-    // 9. BOTONES, IMPORTACIÓN Y MODAL
+    // 3. BOTONES Y CONTROLES (Exportación y Nube)
     // ---------------------------------------------------------
-
-    setupButtons: function() {
-
-        // Probar flujo
-        const btnTest = document.getElementById('btn-test');
-        if (btnTest) btnTest.addEventListener('click', () => window.LibertyEngine.testLocal());
-
-        // Generar código → abrir modal
+    setupButtons: function () {
+        // --- 1. DESPLEGAR Y ENSAMBLAR CÓDIGO ---
         const btnDeploy = document.getElementById('btn-deploy');
-        if (btnDeploy) btnDeploy.addEventListener('click', () => {
-            const code = window.LibertyEngine.generateCode();
-            if (!code) return;
-            document.getElementById('generated-code-display').textContent = code;
-            document.getElementById('code-modal').style.display = 'flex';
-        });
+        const modalCode = document.getElementById('modal-code'); // Asegurate de que este ID coincida con tu HTML
+        if (btnDeploy && modalCode) {
+            btnDeploy.onclick = () => {
+                const finalCode = window.LibertyEngine.generateCode();
+                document.getElementById('generated-code-display').textContent = finalCode;
+                modalCode.style.display = 'flex';
+            };
+        }
 
-        // Cerrar modal
-        const btnClose = document.getElementById('close-modal');
-        if (btnClose) btnClose.addEventListener('click', () => {
-            document.getElementById('code-modal').style.display = 'none';
-        });
+        const btnCloseModal = document.getElementById('close-modal');
+        if (btnCloseModal && modalCode) {
+            btnCloseModal.onclick = () => modalCode.style.display = 'none';
+        }
 
-        // Copiar código
+        // --- 2. COPIAR CÓDIGO AL PORTAPAPELES ---
         const btnCopy = document.getElementById('btn-copy-code');
-        if (btnCopy) btnCopy.addEventListener('click', () => {
-            const code = document.getElementById('generated-code-display').textContent;
-            navigator.clipboard.writeText(code).then(() => {
-                this.showToast("📋 ¡Código copiado!");
-                setTimeout(() => this.hideToast(), 3000);
-            });
-        });
+        if (btnCopy) {
+            btnCopy.onclick = () => {
+                const code = document.getElementById('generated-code-display').textContent;
+                navigator.clipboard.writeText(code);
+                if (typeof this.showToast === 'function') this.showToast("📋 Código copiado al portapapeles.");
+            };
+        }
 
-        // Descargar .js
-        const btnDownload = document.getElementById('btn-download-js');
-        if (btnDownload) btnDownload.addEventListener('click', () => {
-            const code = document.getElementById('generated-code-display').textContent;
-            const blob = new Blob([code], { type: 'text/javascript' });
-            const url  = URL.createObjectURL(blob);
-            const a    = document.createElement('a');
-            a.href     = url;
-            a.download = 'flujo_libertynode.js';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            this.showToast("💾 Archivo descargado.");
-            setTimeout(() => this.hideToast(), 3000);
-        });
+        // --- 3. DESCARGAR CÓDIGO (.js) ---
+        const btnDownloadJs = document.getElementById('btn-download-js');
+        if (btnDownloadJs) {
+            btnDownloadJs.onclick = () => {
+                const code = document.getElementById('generated-code-display').textContent;
+                const blob = new Blob([code], { type: 'text/javascript' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'liberty-bot.js';
+                a.click();
+                URL.revokeObjectURL(url);
+                if (typeof this.showToast === 'function') this.showToast("⬇️ Archivo JS descargado.");
+            };
+        }
 
-        // --- IMPORTAR MÓDULOS: abre el modal ---
-        const btnImport     = document.getElementById('btn-import-local');
-        const modalImport   = document.getElementById('modal-import');
-        const closeImport   = document.getElementById('close-modal-import');
-        const btnFetchUrl   = document.getElementById('btn-fetch-url');
-        const btnLocalFile  = document.getElementById('btn-local-file');
-        const importResult  = document.getElementById('import-result');
+        // --- 4. GUARDAR PROYECTO UNIVERSAL (BÓVEDA / GITHUB) ---
+        // --- GUARDAR PROYECTO (CON FILTRO DE SEGURIDAD) ---
+        const btnCloudSave = document.getElementById('btn-cloud-save');
+        if (btnCloudSave) {
+            btnCloudSave.onclick = async () => {
+                if (!window.LibertyUser) return this.showToast("❌ Iniciá sesión primero.");
+                const nameInput = document.getElementById('project-name-input');
+                let projectName = nameInput ? nameInput.value.trim() : (window.currentProjectName || "Nuevo_Proyecto");
 
-        const mostrarResultado = (msg, ok) => {
-            if (!importResult) return;
-            importResult.style.display  = 'block';
-            importResult.style.background = ok ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)';
-            importResult.style.border   = ok ? '1px solid rgba(16,185,129,0.3)' : '1px solid rgba(239,68,68,0.3)';
-            importResult.style.color    = ok ? 'var(--accent-green)' : 'var(--accent-red)';
-            importResult.textContent    = msg;
-        };
+                // 1. Normalizar filename para evitar .json.json y problemas de espacios
+                if (projectName.toLowerCase().endsWith('.json')) {
+                    projectName = projectName.slice(0, -5);
+                }
+                projectName = projectName.replace(/\\s+/g, '_');
+                window.currentProjectName = projectName;
 
-        const inyectarYRegistrar = (codigo) => {
-            const modulosAntes = Object.keys(window.LibertyModules);
-            try {
-                const s = document.createElement('script');
-                s.textContent = codigo;
-                document.body.appendChild(s);
-            } catch (err) {
-                mostrarResultado('❌ El archivo tiene errores de sintaxis.', false);
-                console.error('[UI] Error inyectando script:', err);
-                return;
-            }
-            setTimeout(() => {
-                const nuevos = Object.keys(window.LibertyModules).filter(
-                    id => !modulosAntes.includes(id)
-                );
-                if (nuevos.length > 0) {
-                    nuevos.forEach(id => this.addModuleToSidebar(id));
-                    mostrarResultado(`✅ ${nuevos.length} módulo(s) agregado(s) al sidebar.`, true);
-                    setTimeout(() => {
-                        if (modalImport) modalImport.style.display = 'none';
-                        if (importResult) importResult.style.display = 'none';
-                        if (document.getElementById('import-url'))
-                            document.getElementById('import-url').value = '';
-                    }, 1800);
+                // Sincronizar posiciones visuales actuales antes de guardar
+                Object.keys(window.LibertyState.nodes).forEach(nodeId => {
+                    const el = document.getElementById(nodeId);
+                    if (el) {
+                        window.LibertyState.nodes[nodeId].ui = { 
+                            x: el.offsetLeft, 
+                            y: el.offsetTop 
+                        };
+                    }
+                });
+
+                // Exportar desde LibertyState (fuente de la verdad)
+                const cleanState = window.LibertyState.exportClean();
+                const workspaceData = JSON.stringify(cleanState, null, 2);
+                const filename = projectName + '.json';
+
+                // --- LÓGICA DE ENVÍO (GitHub / Local) ---
+                if (window.LibertyUser.ghToken) {
+                    this.showToast("☁️ Sincronizando con GitHub...");
+                    try {
+                        const userRes = await fetch("https://api.github.com/user", { headers: { "Authorization": `token ${window.LibertyUser.ghToken}` } });
+                        const githubUsername = (await userRes.json()).login;
+                        const url = `https://api.github.com/repos/${githubUsername}/libertynode/contents/saves/${encodeURIComponent(filename)}`;
+
+                        let sha = null;
+                        const getRes = await fetch(url, { headers: { "Authorization": `token ${window.LibertyUser.ghToken}` } });
+                        if (getRes.ok) sha = (await getRes.json()).sha;
+
+                        const putRes = await fetch(url, {
+                            method: "PUT",
+                            headers: { "Authorization": `token ${window.LibertyUser.ghToken}`, "Content-Type": "application/json" },
+                            body: JSON.stringify({ message: `💾 Save: ${filename}`, content: btoa(unescape(encodeURIComponent(workspaceData))), ...(sha && { sha }) })
+                        });
+                        if (putRes.ok) this.showToast(`✅ '${projectName}' guardado en la nube (sin llaves).`);
+                    } catch (e) { this.showToast("❌ Error en conexión GitHub."); }
                 } else {
-                    mostrarResultado('⚠️ No se detectaron módulos nuevos en el archivo.', false);
+                    const key = `liberty_saves_${window.LibertyUser.email}`;
+                    let saves = JSON.parse(localStorage.getItem(key) || '{}');
+                    saves[projectName] = workspaceData;
+                    localStorage.setItem(key, JSON.stringify(saves));
+                    this.showToast(`✅ '${projectName}' guardado localmente.`);
                 }
-            }, 150);
-        };
-
-        // Abrir modal
-        if (btnImport && modalImport) {
-            btnImport.addEventListener('click', () => {
-                if (importResult) importResult.style.display = 'none';
-                modalImport.style.display = 'flex';
-            });
+            };
         }
 
-        // Cerrar modal
-        if (closeImport && modalImport) {
-            closeImport.addEventListener('click', () => {
-                modalImport.style.display = 'none';
-                if (importResult) importResult.style.display = 'none';
-            });
-        }
-
-        // Cerrar al hacer clic fuera del panel
-        if (modalImport) {
-            modalImport.addEventListener('click', (e) => {
-                if (e.target === modalImport) modalImport.style.display = 'none';
-            });
-        }
-
-        // OPCIÓN 1: Cargar desde URL
-        if (btnFetchUrl) {
-            btnFetchUrl.addEventListener('click', async () => {
-                const url = (document.getElementById('import-url')?.value || '').trim();
-                if (!url) { mostrarResultado('⚠️ Ingresá una URL válida.', false); return; }
-
-                mostrarResultado('☁️ Descargando...', true);
-                try {
-                    const res = await fetch(url);
-                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                    const codigo = await res.text();
-                    inyectarYRegistrar(codigo);
-                } catch (err) {
-                    mostrarResultado(`❌ Error al descargar: ${err.message}`, false);
-                    console.error('[UI] Fetch URL error:', err);
-                }
-            });
-        }
-
-        // OPCIÓN 2: Archivo local
-        if (btnLocalFile) {
-            btnLocalFile.addEventListener('click', () => {
-                const input  = document.createElement('input');
-                input.type   = 'file';
-                input.accept = '.js';
-                input.onchange = (e) => {
-                    const file = e.target.files[0];
-                    if (!file) return;
-                    const reader = new FileReader();
-                    reader.onload = (ev) => inyectarYRegistrar(ev.target.result);
-                    reader.readAsText(file);
-                };
-                input.click();
-            });
-        }
     },
-
     // ---------------------------------------------------------
     // 10. SIDEBAR DINÁMICO
     // ---------------------------------------------------------
 
-    addModuleToSidebar: function(moduleId) {
-        const moduleDef      = window.LibertyModules[moduleId];
-        const scrollArea     = document.querySelector('.modules-scroll');
-        if (!moduleDef || !scrollArea) return;
+    /**
+     * Dibuja un módulo nuevo agrupándolo por categorías colapsables
+     */
+    addModuleToSidebar: function (moduleId) {
+        const moduleDef = window.LibertyModules[moduleId];
+        const scrollArea = document.querySelector('.modules-scroll');
+        if (!scrollArea || !moduleDef) return;
 
+        // 1. Determinar la categoría automáticamente
+        let catName = "Generales";
+        if (moduleId.startsWith('tg_')) catName = "Telegram";
+        else if (moduleId.startsWith('g_')) catName = "Google Workspace";
+        else if (moduleId.startsWith('ai_')) catName = "Inteligencia Artificial";
+        else if (moduleId.startsWith('trigger_') && !moduleDef.category) catName = "Disparadores (Triggers)";
+
+        // Limpiamos el nombre para usarlo como ID
+        const catId = 'cat-' + catName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+        let catContainer = document.getElementById(catId);
+
+        // 2. Si la categoría no existe, creamos el "Acordeón"
+        if (!catContainer) {
+            const group = document.createElement('div');
+            group.className = 'category-group';
+            group.style.marginBottom = '8px';
+            group.innerHTML = `
+                <div class="category-title" style="padding: 10px 15px; cursor: pointer; background: rgba(255,255,255,0.05); border-radius: 6px; font-size: 0.85rem; font-weight: bold; color: var(--text-secondary); display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color);">
+                    <span>${catName}</span>
+                    <span style="font-size: 1.2rem; line-height: 0.5;">▾</span>
+                </div>
+                <div class="category-content active" id="${catId}" style="padding: 5px; display: flex; flex-direction: column; gap: 5px; margin-top: 5px;"></div>
+            `;
+
+            // Lógica para colapsar/expandir
+            group.querySelector('.category-title').onclick = function () {
+                const content = this.nextElementSibling;
+                content.style.display = content.style.display === 'none' ? 'flex' : 'none';
+            };
+
+            scrollArea.appendChild(group);
+            catContainer = group.querySelector('.category-content');
+        }
+
+        // 3. Crear el bloque arrastrable
         const item = document.createElement('div');
         item.className = 'module-item';
         item.setAttribute('draggable', 'true');
         item.setAttribute('data-module', moduleId);
         item.style.borderLeft = `3px solid ${moduleDef.color}`;
+
         item.innerHTML = `
-            <span class="mod-icon" style="color:${moduleDef.color};">${moduleDef.icon}</span>
-            <div><div style="font-size:0.9rem;">${moduleDef.title}</div></div>
+            <span class="mod-icon" style="color: ${moduleDef.color};">${moduleDef.icon}</span>
+            <div class="mod-info"><div>${moduleDef.title}</div></div>
         `;
 
         item.addEventListener('dragstart', (e) => {
@@ -647,14 +925,15 @@ const UI = {
             this.draggedModuleId = t ? t.getAttribute('data-module') : null;
         });
 
-        scrollArea.appendChild(item);
+        // Agregarlo a su carpeta correspondiente
+        catContainer.appendChild(item);
     },
 
     // ---------------------------------------------------------
     // 11. TOAST (Notificaciones)
     // ---------------------------------------------------------
 
-    showToast: function(msg) {
+    showToast: function (msg) {
         let toast = document.getElementById('liberty-toast');
         if (!toast) {
             toast = document.createElement('div');
@@ -668,12 +947,12 @@ const UI = {
             `;
             document.body.appendChild(toast);
         }
-        toast.innerText    = msg;
+        toast.innerText = msg;
         toast.style.opacity = '1';
         toast.style.display = 'block';
     },
 
-    hideToast: function() {
+    hideToast: function () {
         const toast = document.getElementById('liberty-toast');
         if (toast) {
             toast.style.opacity = '0';
